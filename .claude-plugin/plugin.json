@@ -1,0 +1,31 @@
+{
+  "name": "dronesystem-skills",
+  "version": "1.0.0",
+  "description": "Always-on caveman + i-have-adhd skills for dronesystem",
+  "author": "dronesystem",
+  "skills": [
+    "./skills/caveman/SKILL.md",
+    "./skills/ultracave/SKILL.md",
+    "./skills/megacave/SKILL.md",
+    "./skills/i-have-adhd/SKILL.md",
+    "./skills/caveman-commit/SKILL.md",
+    "./skills/caveman-review/SKILL.md",
+    "./skills/investigate-first/SKILL.md",
+    "./skills/lean-build/SKILL.md",
+    "./skills/surgical-patch/SKILL.md",
+    "./skills/safe-refactor/SKILL.md",
+    "./skills/migration/SKILL.md",
+    "./skills/verify-and-stop/SKILL.md",
+    "./skills/cavecrew/SKILL.md",
+    "./skills/caveman-help/SKILL.md",
+    "./skills/caveman-stats/SKILL.md",
+    "./skills/caveman-compress/SKILL.md",
+    "./skills/caveman-discover/SKILL.md",
+    "./skills/caveman-learn/SKILL.md",
+    "./skills/caveman-manage/SKILL.md",
+    "./skills/caveman-optimize/SKILL.md",
+    "./skills/caveman-explore/SKILL.md",
+    "./skills/caveman-evidence-review/SKILL.md",
+    "./skills/caveman-setup/SKILL.md"
+  ]
+}

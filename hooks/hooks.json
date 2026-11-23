@@ -1,0 +1,14 @@
+{
+  "hooks": [
+    {
+      "event": "SessionStart",
+      "command": "cat AGENTS.md",
+      "description": "Load always-on caveman + i-have-adhd rules at session start"
+    },
+    {
+      "event": "UserPromptSubmit",
+      "command": "echo 'Caveman mode: caveman | ADHD mode: on'",
+      "description": "Reinforce always-on modes each prompt"
+    }
+  ]
+}
