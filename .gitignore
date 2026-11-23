@@ -37,3 +37,23 @@ Thumbs.db
 
 # --- Never commit the DJI App Key ---
 app/src/main/res/values/secrets.xml
+
+# --- Android SDK installed INSIDE the project (Android Studio does this when
+#     no SDK exists yet and the project folder is chosen as SDK location).
+#     None of these belong in Git. The SDK should live at ~/Android/Sdk ---
+build-tools/
+emulator/
+licenses/
+platforms/
+platform-tools/
+system-images/
+extras/
+add-ons/
+ndk/
+cmake/
+patcher/
+skins/
+cmdline-tools/
+.knownPackages/
+.temp/
+.android/
