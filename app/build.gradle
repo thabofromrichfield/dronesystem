@@ -1,5 +1,13 @@
 // GHOSTGRID UAV — application module
-// This is MY project. dji-reference/sample-code is vendor sample code and is not built.
+// Two flavours, deliberately split so the interface can be previewed anywhere:
+//
+//   full  → real DJI Mobile SDK 4.18. Flies an aircraft. ARM only.
+//   sim   → no DJI dependency at all. Runs on an x86_64 emulator at full speed
+//           and drives the whole HUD from synthetic telemetry.
+//
+// Build them separately:
+//   ./gradlew assembleFullDebug     → app/build/outputs/apk/full/debug/
+//   ./gradlew installSimDebug       → straight onto a running emulator
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
@@ -20,12 +28,25 @@ android {
         multiDexEnabled true
         versionCode 1
         versionName "0.1.0"
-        ndk {
-            // DJI ships 32/64-bit native libs only. x86 emulators are not supported.
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
-        }
-        // HMS health codes used by the diagnostics console.
         vectorDrawables.useSupportLibrary = true
+    }
+
+    flavorDimensions "backend"
+
+    productFlavors {
+        full {
+            dimension "backend"
+            // DJI ships 32/64-bit ARM native libs only. No x86 build exists.
+            ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' }
+        }
+        sim {
+            dimension "backend"
+            applicationIdSuffix ".sim"
+            versionNameSuffix "-sim"
+            // No DJI libraries are linked in this flavour, so the emulator's
+            // native ABIs are available and the AVD runs unemulated.
+            ndk { abiFilters 'x86_64', 'x86' }
+        }
     }
 
     buildTypes {
@@ -45,6 +66,7 @@ android {
     }
 
     // Do NOT strip DJI native libraries. Stripping them crashes the SDK at load time.
+    // Harmless no-ops in the sim flavour, which links none of these.
     packagingOptions {
         doNotStrip "*/*/libdjivideo.so"
         doNotStrip "*/*/libSDKRelativeJNI.so"
@@ -87,12 +109,13 @@ android {
 }
 
 dependencies {
-    // --- DJI Mobile SDK V4 -------------------------------------------------
-    implementation('com.dji:dji-sdk:4.18') {
+    // --- DJI Mobile SDK V4 — full flavour ONLY -----------------------------
+    // The sim flavour never sees these, which is what lets it run on x86_64.
+    fullImplementation('com.dji:dji-sdk:4.18') {
         // Anti-distortion is only needed for Mavic 2 Pro/Zoom dual-camera work.
         exclude module: 'library-anti-distortion'
     }
-    compileOnly 'com.dji:dji-sdk-provided:4.18'
+    fullCompileOnly 'com.dji:dji-sdk-provided:4.18'
 
     // --- AndroidX ----------------------------------------------------------
     implementation 'androidx.multidex:multidex:2.0.0'

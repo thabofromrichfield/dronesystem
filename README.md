@@ -38,6 +38,22 @@ controller; the phone is the head-up glass either way.
 | Simulator | Starts the DJI onboard simulator at your current position so you can rehearse with props still |
 | SIM feed | Synthetic telemetry that renders the whole HUD with no aircraft attached. Cannot send commands |
 
+## Two build flavours
+
+| | `full` | `sim` |
+| --- | --- | --- |
+| DJI Mobile SDK 4.18 | linked | **not linked at all** |
+| What it does | flies a real aircraft | renders the interface on synthetic data |
+| ABI | `armeabi-v7a`, `arm64-v8a` | `x86_64`, `x86` |
+| Runs on an emulator | no | **yes, unemulated** |
+| Application ID | `drone.test` | `drone.test.sim` |
+| Build | `./gradlew assembleFullDebug` | `./gradlew installSimDebug` |
+
+The split is a source-set boundary, not a runtime flag. `src/main` holds the
+interface and is DJI-free by construction; `src/full` holds every class that
+imports `dji.*`; `src/sim` supplies a stub backend with no SDK on the classpath.
+Nothing in `ui/` imports `dji.*`, and a check in the build notes enforces it.
+
 ## Repository layout
 
 Two halves, deliberately separate:
@@ -59,12 +75,12 @@ These are real aircraft controls, so the risky paths are deliberate:
    an input that is no longer coming.
 4. Virtual stick streams at 10 Hz; if the stream stops, the aircraft's own
    failsafe takes over.
-5. Speed ceilings live in `core/VirtualStickController.kt`: 6 m/s horizontal,
+5. Speed ceilings live in `VirtualStickController.kt` (in `src/full`): 6 m/s horizontal,
    3 m/s vertical, 60 °/s yaw.
 
 ## Before the first real flight
 
-`core/VirtualStickController.kt` has one constant that must be checked on the
+`app/src/full/java/drone/test/core/VirtualStickController.kt` has one constant that must be checked on the
 ground: `SWAP_PITCH_ROLL`.
 
 DJI 4.18's `FlightControlData(pitch, roll, yaw, verticalThrottle)` has its first

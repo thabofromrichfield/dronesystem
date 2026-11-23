@@ -31,6 +31,11 @@ git checkout arena/0a7a4efc-dronesystem
 Android Studio reads `settings.gradle`, sees `include ':app'`, and ignores
 `dji-reference/` entirely.
 
+**Set the Gradle JDK to 11 before syncing.** The repo pins Gradle 6.7.1, which
+runs on Java 8–15 only. Android Studio ships JBR 17 or 21 and the sync will fail
+with `Unsupported class file major version` unless you point it at an 11:
+`File → Settings → Build Tools → Gradle → Gradle JDK → 11`.
+
 ## 3. Let Gradle sync
 
 First sync downloads the Gradle 6.7.1 wrapper, DJI SDK 4.18 and the AndroidX
@@ -58,6 +63,40 @@ if it insists on a newer AGP, add this to `gradle.properties`:
 android.suppressUnsupportedCompileSdk=33
 ```
 
+## 3b. Run it on an emulator (interface only)
+
+The `sim` flavour links no DJI SDK at all, so it builds for `x86_64` and runs
+unemulated on a normal AVD. This is the fast way to see and tune the interface.
+
+1. Create the AVD: `Tools → Device Manager → Create Virtual Device`
+   - Phone profile, anything with a landscape-friendly size
+   - System image: **API 33, x86_64**, no Google Play needed
+2. Pick the build variant: `Build → Select Build Variant…` → `app` → **simDebug**
+3. Press Run
+
+Or from the terminal:
+
+```bash
+./gradlew installSimDebug
+adb shell am start -n drone.test.sim/drone.test.ui.BootActivity
+```
+
+What the sim build does and does not do:
+
+| | sim build | full build |
+| --- | --- | --- |
+| HUD, tapes, reticle, console | yes | yes |
+| Synthetic telemetry | yes | no |
+| Live camera feed | no — surface stays black | yes |
+| Virtual stick / flight commands | refused and logged | yes |
+| DJI App Key needed | no | yes |
+| Runs on x86_64 emulator | yes | no, ARM only |
+
+Its `applicationId` is `drone.test.sim`, so it installs alongside the real app
+without replacing it.
+
+---
+
 ## 4. Get a DJI App Key
 
 1. Go to https://account.dji.com/register?appId=71#/developer
@@ -76,18 +115,21 @@ without a key.
 
 ## 5. Build and install
 
-```bash
-./gradlew assembleDebug
-```
-
-or in the IDE pick a device and press Run.
-
-The APK lands in `app/build/outputs/apk/debug/app-debug.apk`. Install it on a
-phone, not an emulator — the DJI SDK has no x86 native libraries.
+Real flight build, on a phone:
 
 ```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleFullDebug
+adb install -r app/build/outputs/apk/full/debug/app-full-debug.apk
 ```
+
+Interface build, on an emulator — see step 3b:
+
+```bash
+./gradlew installSimDebug
+```
+
+`./gradlew assembleDebug` builds both. The full APK is ARM only and will not
+install on an x86_64 AVD.
 
 ## 6. Fly
 
@@ -109,6 +151,20 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
   synthetic data. No aircraft, no App Key needed. It is watermarked
   `SIMULATION` across the glass and refuses every flight command.
 
+## Sanity-check the source without building
+
+`tools/verify_structure.py` runs the structural checks in about a second and
+needs no JDK:
+
+```bash
+python3 tools/verify_structure.py
+```
+
+It confirms the flavour boundary (nothing outside `src/full` imports `dji.*`),
+that both backends implement all 28 `UavBackend` methods, that every `R.*`
+reference and layout class resolves, and that the manifest classes exist. It is
+not a compiler — run it to catch a broken edit fast, then still build.
+
 ## Troubleshooting
 
 | Symptom | Cause / fix |
@@ -118,18 +174,21 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 | Boot screen stuck on `REGISTERING` | Permissions denied. Re-launch and grant location |
 | `LINK : STANDBY` forever | USB/OTG cable not passing data. Try another cable |
 | Video black, telemetry alive | Primary video feed not up yet. Power the aircraft fully, not just the controller |
-| Push forward, aircraft rolls | `SWAP_PITCH_ROLL` in `core/VirtualStickController.kt` is wrong for your airframe. Flip it |
+| Push forward, aircraft rolls | `SWAP_PITCH_ROLL` in `VirtualStickController.SWAP_PITCH_ROLL` is wrong for your airframe. Flip it |
+| `Unsupported class file major version` | Gradle JDK is not 11. `Settings → Build Tools → Gradle → Gradle JDK` |
+| `INSTALL_FAILED_NO_MATCHING_ABIS` | You put the `full` APK on an x86_64 emulator. Use `installSimDebug` instead |
 | Build fails on `Could not find com.dji:dji-sdk:4.18` | Stale Gradle cache. `./gradlew --stop` then `File → Invalidate Caches` |
+| Build fails on `unresolved reference: UavBackendFactory` | You selected a build variant that has no source set. Pick `fullDebug` or `simDebug` |
 | `More than one file was found with OS independent path 'META-INF/rxjava.properties'` | Should not happen — the `packagingOptions` excludes are in `app/build.gradle`. Check they were not removed |
 
 ## Where things live
 
 | I want to change… | File |
 | --- | --- |
-| Colours | `app/src/main/res/values/colors.xml` **and** `ui/widget/Palette.kt` (keep both in sync) |
+| Colours | `src/main/res/values/colors.xml` **and** `ui/widget/Palette.kt` — keep both in sync |
 | HUD drawing | `ui/widget/HudOverlay.kt` |
-| Stick feel and speed ceilings | `ui/widget/CyberJoystick.kt`, `core/VirtualStickController.kt` |
-| What telemetry is read | `core/TelemetrySource.kt`, `core/Telemetry.kt` |
-| What commands exist | `core/FlightOps.kt` |
-| Buttons and layout | `app/src/main/res/layout/activity_control.xml` |
-| App name, labels | `app/src/main/res/values/strings.xml` |
+| Stick feel and speed ceilings | `ui/widget/CyberJoystick.kt`, `VirtualStickController.kt` (in `src/full`) |
+| What telemetry is read | `src/full/core/TelemetrySource.kt`, `src/main/core/Telemetry.kt` |
+| What commands exist | `src/full/core/FlightOps.kt`, behind `src/main/core/UavBackend.kt` |
+| Buttons and layout | `src/main/res/layout/activity_control.xml` |
+| App name, labels | `src/main/res/values/strings.xml` |

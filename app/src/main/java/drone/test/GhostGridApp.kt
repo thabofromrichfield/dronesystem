@@ -3,6 +3,7 @@ package drone.test
 import android.app.Application
 import android.content.Context
 import androidx.multidex.MultiDex
+import drone.test.core.Backend
 import drone.test.core.LogBus
 
 /**
@@ -15,8 +16,9 @@ class GhostGridApp : Application() {
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
         MultiDex.install(this)
-        // DJI ships its native libs packed; this unpacks them on first run.
-        runCatching { com.cySdkyc.clx.Helper.install(this) }
+        // Native unpacking is backend-specific: the full flavour unpacks DJI's
+        // packed .so files, the sim flavour has none to unpack.
+        runCatching { Backend.uav.installNatives(this) }
             .onFailure { LogBus.err("native loader: ${it.message}") }
         instance = this
     }

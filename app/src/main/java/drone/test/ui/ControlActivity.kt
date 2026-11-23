@@ -7,14 +7,12 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import drone.test.R
+import drone.test.core.Backend
 import drone.test.core.DemoTelemetry
-import drone.test.core.FlightOps
 import drone.test.core.LogBus
-import drone.test.core.ProductBus
 import drone.test.core.Telemetry
-import drone.test.core.TelemetrySource
 import drone.test.core.TelemetryStore
-import drone.test.core.VirtualStickController
+import drone.test.core.UavLinkState
 import drone.test.ui.widget.ConsoleView
 import drone.test.ui.widget.CyberJoystick
 import drone.test.ui.widget.FpvSurface
@@ -22,9 +20,13 @@ import drone.test.ui.widget.HudOverlay
 import drone.test.util.Fmt
 
 /**
- * The control surface. Full-screen FPV with head-up glass, two virtual sticks and
- * a command rail. Landscape only, so the layout matches how a controller phone is
- * actually held.
+ * The control surface. Full-screen FPV with head-up glass, two virtual sticks
+ * and a command rail. Landscape only, so the layout matches how a controller
+ * phone is actually held.
+ *
+ * Every command goes through [Backend.uav], so this class is identical in the
+ * `full` build, where it flies an aircraft, and the `sim` build, where the same
+ * buttons are refused and logged.
  */
 class ControlActivity : AppCompatActivity() {
 
@@ -38,6 +40,13 @@ class ControlActivity : AppCompatActivity() {
 
     private var recording = false
 
+    // Mode 2 (American hand 2): left stick = throttle + yaw, right = pitch + roll.
+    // Held here so one stick's move can be forwarded with the other's last value.
+    private var stickPitch = 0f
+    private var stickRoll = 0f
+    private var stickYaw = 0f
+    private var stickThrottle = 0f
+
     private val telemetryListener: (Telemetry) -> Unit = { t ->
         hud.data = t
         renderChip(t)
@@ -48,9 +57,9 @@ class ControlActivity : AppCompatActivity() {
         }
     }
 
-    private val linkListener: (ProductBus.Link) -> Unit = { link ->
+    private val linkListener: (UavLinkState) -> Unit = { link ->
         chip.text = "LINK ${link.name}"
-        chip.setTextColor(if (link == ProductBus.Link.LINKED) 0xFF00FF9C.toInt() else 0xFFFFB300.toInt())
+        chip.setTextColor(if (link == UavLinkState.LINKED) 0xFF00FF9C.toInt() else 0xFFFFB300.toInt())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,38 +80,40 @@ class ControlActivity : AppCompatActivity() {
 
         findViewById<CyberJoystick>(R.id.stick_left).label = getString(R.string.stick_left_label)
         findViewById<CyberJoystick>(R.id.stick_right).label = getString(R.string.stick_right_label)
+
+        LogBus.info("control surface up — backend: ${Backend.uav.label}")
     }
 
     // ------------------------------------------------------------- lifecycle
+
+    override fun onStart() {
+        super.onStart()
+        TelemetryStore.attach(telemetryListener)
+        Backend.uav.addLinkListener(linkListener)
+        stickButton.text = getString(R.string.btn_stick)
+        if (DemoTelemetry.running && Backend.uav.canFly) {
+            LogBus.warn("SIM feed active — SDK telemetry and video are bypassed")
+        } else {
+            Backend.uav.startTelemetry()
+            fpv.start()
+        }
+    }
 
     override fun onStop() {
         // Order matters. A paused UI must never keep driving the aircraft, and
         // DJI must not be left in virtual-stick mode with no input stream behind
         // it — that state triggers the aircraft's own failsafe. So hand authority
         // back to the physical controller first, then tear the stream down.
-        if (VirtualStickController.active) {
-            FlightOps.setVirtualStick(false)
+        if (Backend.uav.stickActive()) {
+            Backend.uav.setVirtualStick(false)
         }
-        VirtualStickController.stop()
+        zeroSticks()
         TelemetryStore.mutate { copy(virtualStickOn = false) }
         fpv.stop()
-        TelemetrySource.stop()
+        Backend.uav.stopTelemetry()
         TelemetryStore.detach(telemetryListener)
-        ProductBus.removeLinkListener(linkListener)
+        Backend.uav.removeLinkListener(linkListener)
         super.onStop()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        TelemetryStore.attach(telemetryListener)
-        ProductBus.addLinkListener(linkListener)
-        stickButton.text = getString(R.string.btn_stick)
-        if (!DemoTelemetry.running) {
-            TelemetrySource.start()
-            fpv.start()
-        } else {
-            LogBus.warn("SIM feed active — SDK telemetry and video are bypassed")
-        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -123,8 +134,8 @@ class ControlActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        val flying = TelemetryStore.current.isFlying
-        if (flying && !TelemetryStore.current.demo) {
+        val t = TelemetryStore.current
+        if (t.isFlying && !t.demo && Backend.uav.canFly) {
             // Full sentences on purpose: this is a safety confirmation.
             AlertDialog.Builder(this)
                 .setTitle("AIRCRAFT IS AIRBORNE")
@@ -148,30 +159,41 @@ class ControlActivity : AppCompatActivity() {
         val left = findViewById<CyberJoystick>(R.id.stick_left)
         val right = findViewById<CyberJoystick>(R.id.stick_right)
 
-        // Mode 2 (American hand 2): left stick = throttle + yaw, right = pitch + roll.
         left.listener = object : CyberJoystick.StickListener {
             override fun onStick(joystick: CyberJoystick, x: Float, y: Float) {
-                if (!VirtualStickController.active) return
-                VirtualStickController.yaw = x
-                VirtualStickController.throttle = y
+                if (!Backend.uav.stickActive()) return
+                stickYaw = x
+                stickThrottle = y
+                pushSticks()
             }
         }
         right.listener = object : CyberJoystick.StickListener {
             override fun onStick(joystick: CyberJoystick, x: Float, y: Float) {
-                if (!VirtualStickController.active) return
-                VirtualStickController.roll = x
-                VirtualStickController.pitch = y
+                if (!Backend.uav.stickActive()) return
+                stickRoll = x
+                stickPitch = y
+                pushSticks()
             }
         }
     }
 
+    private fun pushSticks() {
+        Backend.uav.setStick(stickPitch, stickRoll, stickYaw, stickThrottle)
+    }
+
+    private fun zeroSticks() {
+        stickPitch = 0f
+        stickRoll = 0f
+        stickYaw = 0f
+        stickThrottle = 0f
+    }
+
     private fun toggleStick() {
-        if (TelemetryStore.current.demo) {
-            LogBus.err("SIM feed: virtual stick needs a real aircraft link")
+        if (!Backend.uav.canFly || TelemetryStore.current.demo) {
+            LogBus.err("virtual stick needs a real aircraft link — this build cannot provide one")
             return
         }
-        val turningOn = !VirtualStickController.active
-        if (turningOn) {
+        if (!Backend.uav.stickActive()) {
             // Confirm in full sentences: engaging virtual stick hands flight
             // authority to this phone and disengages the physical controller sticks.
             AlertDialog.Builder(this)
@@ -179,16 +201,17 @@ class ControlActivity : AppCompatActivity() {
                 .setMessage(
                     "This phone takes flight authority. The controller sticks stop responding. " +
                         "Release both sticks to hover. Max horizontal speed is " +
-                        "${Fmt.num(VirtualStickController.maxHorizontalMs, 1)} m/s."
+                        "${Fmt.num(Backend.uav.maxHorizontalMs(), 1)} m/s."
                 )
                 .setNegativeButton("CANCEL") { d, _ -> d.dismiss() }
                 .setPositiveButton("ENGAGE") { _, _ ->
-                    FlightOps.setVirtualStick(true)
+                    Backend.uav.setVirtualStick(true)
                     stickButton.text = "STICK ON"
                 }
                 .show()
         } else {
-            FlightOps.setVirtualStick(false)
+            Backend.uav.setVirtualStick(false)
+            zeroSticks()
             stickButton.text = getString(R.string.btn_stick)
         }
     }
@@ -199,41 +222,40 @@ class ControlActivity : AppCompatActivity() {
         stickButton.setOnClickListener { toggleStick() }
         findViewById<Button>(R.id.btn_takeoff).setOnClickListener {
             confirm("AUTO TAKEOFF", "The aircraft will climb to about 1.2 m and hover. Area clear?") {
-                FlightOps.takeoff()
+                Backend.uav.takeoff()
             }
         }
-        findViewById<Button>(R.id.btn_hover).setOnClickListener { FlightOps.hover() }
+        findViewById<Button>(R.id.btn_hover).setOnClickListener { Backend.uav.hover() }
         findViewById<Button>(R.id.btn_land).setOnClickListener {
             confirm("AUTO LAND", "The aircraft descends and shuts down its motors. Ground clear?") {
-                FlightOps.land()
+                Backend.uav.land()
             }
         }
         findViewById<Button>(R.id.btn_confirm_land).setOnClickListener {
             confirm("CONFIRM LANDING", "Motors will stop. Confirm only when the landing surface is verified clear.") {
-                FlightOps.confirmLanding()
+                Backend.uav.confirmLanding()
             }
         }
-        findViewById<Button>(R.id.btn_cancel_land).setOnClickListener { FlightOps.cancelLanding() }
+        findViewById<Button>(R.id.btn_cancel_land).setOnClickListener { Backend.uav.cancelLanding() }
         findViewById<Button>(R.id.btn_rth).setOnClickListener {
             confirm("RETURN TO HOME", "The aircraft flies to the recorded home point and lands.") {
-                FlightOps.goHome()
+                Backend.uav.goHome()
             }
         }
 
-        findViewById<Button>(R.id.btn_photo).setOnClickListener { FlightOps.shootPhoto() }
+        findViewById<Button>(R.id.btn_photo).setOnClickListener { Backend.uav.shootPhoto() }
         recordButton.setOnClickListener {
-            val start = !TelemetryStore.current.recording
-            FlightOps.toggleRecording(start)
+            Backend.uav.toggleRecording(!TelemetryStore.current.recording)
         }
 
-        findViewById<Button>(R.id.btn_gimbal_up).setOnClickListener { FlightOps.gimbalSpeed(15f) }
-        findViewById<Button>(R.id.btn_gimbal_down).setOnClickListener { FlightOps.gimbalSpeed(-15f) }
-        findViewById<Button>(R.id.btn_gimbal_stop).setOnClickListener { FlightOps.gimbalSpeed(0f) }
-        findViewById<Button>(R.id.btn_gimbal_horizon).setOnClickListener { FlightOps.gimbalTo(0f) }
-        findViewById<Button>(R.id.btn_gimbal_down45).setOnClickListener { FlightOps.gimbalTo(-45f) }
+        findViewById<Button>(R.id.btn_gimbal_up).setOnClickListener { Backend.uav.gimbalSpeed(15f) }
+        findViewById<Button>(R.id.btn_gimbal_down).setOnClickListener { Backend.uav.gimbalSpeed(-15f) }
+        findViewById<Button>(R.id.btn_gimbal_stop).setOnClickListener { Backend.uav.gimbalSpeed(0f) }
+        findViewById<Button>(R.id.btn_gimbal_horizon).setOnClickListener { Backend.uav.gimbalTo(0f) }
+        findViewById<Button>(R.id.btn_gimbal_down45).setOnClickListener { Backend.uav.gimbalTo(-45f) }
 
         simButton.setOnClickListener {
-            if (TelemetryStore.current.simulatorOn) FlightOps.stopSimulator() else FlightOps.startSimulator()
+            if (Backend.uav.simulatorOn()) Backend.uav.stopSimulator() else Backend.uav.startSimulator()
         }
 
         findViewById<Button>(R.id.btn_console).setOnClickListener {
@@ -256,12 +278,12 @@ class ControlActivity : AppCompatActivity() {
             .setTitle("FLIGHT LIMITS")
             .setItems(labels) { _, which ->
                 when (which) {
-                    0 -> FlightOps.setGoHomeHeight(40)
-                    1 -> FlightOps.setGoHomeHeight(60)
-                    2 -> FlightOps.setMaxHeight(120)
-                    3 -> FlightOps.setMaxHeight(60)
-                    4 -> FlightOps.setMaxRadius(100)
-                    5 -> FlightOps.setMaxRadius(300)
+                    0 -> Backend.uav.setGoHomeHeight(40)
+                    1 -> Backend.uav.setGoHomeHeight(60)
+                    2 -> Backend.uav.setMaxHeight(120)
+                    3 -> Backend.uav.setMaxHeight(60)
+                    4 -> Backend.uav.setMaxRadius(100)
+                    5 -> Backend.uav.setMaxRadius(300)
                 }
             }
             .show()
@@ -272,8 +294,8 @@ class ControlActivity : AppCompatActivity() {
      * design — a fragment here is exactly the wrong shape.
      */
     private fun confirm(title: String, message: String, action: () -> Unit) {
-        if (TelemetryStore.current.demo) {
-            LogBus.err("SIM feed: flight commands are disabled")
+        if (!Backend.uav.canFly || TelemetryStore.current.demo) {
+            LogBus.err("flight commands are disabled in this build")
             return
         }
         AlertDialog.Builder(this)

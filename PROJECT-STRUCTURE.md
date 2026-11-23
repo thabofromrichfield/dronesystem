@@ -1,38 +1,39 @@
 # GHOSTGRID — project structure
 
-Two clearly separated halves. Mine on top, DJI's underneath.
+Three clearly separated parts: my interface, my two backend flavours, and DJI's reference code.
 
 ```
 /
 ├── app/                      ← MY PROJECT. Everything I write lives here.
-│   ├── build.gradle
+│   ├── build.gradle            flavours: full (ARM, real SDK) / sim (x86_64, no SDK)
 │   ├── proguard-rules.pro
-│   └── src/main/
-│       ├── AndroidManifest.xml
-│       ├── assets/           DJI health-code tables
-│       ├── java/drone/test/
-│       │   ├── GhostGridApp.kt
-│       │   ├── core/         SDK-facing code, no Android views
-│       │   │   ├── ProductBus.kt           registerApp + connect/disconnect
-│       │   │   ├── Telemetry.kt            one immutable HUD frame
-│       │   │   ├── TelemetryStore.kt       latest frame + main-thread push
-│       │   │   ├── TelemetrySource.kt      DJI state callbacks → Telemetry
-│       │   │   ├── FlightOps.kt            every command that leaves the phone
-│       │   │   ├── VirtualStickController.kt  10 Hz stick stream
-│       │   │   ├── DemoTelemetry.kt        synthetic frames, SDK never touched
-│       │   │   ├── SdkPermissions.kt
-│       │   │   └── LogBus.kt               rolling mission console
-│       │   ├── ui/
-│       │   │   ├── BootActivity.kt         link screen
-│       │   │   ├── ControlActivity.kt      the control surface
-│       │   │   └── widget/
-│       │   │       ├── FpvSurface.kt       DJICodecManager video sink
-│       │   │       ├── HudOverlay.kt       artificial horizon, tapes, reticle
-│       │   │       ├── CyberJoystick.kt    touch stick, auto-recentres
-│       │   │       ├── ConsoleView.kt      scrolling log
-│       │   │       └── Palette.kt          canvas colours
-│       │   └── util/Fmt.kt
-│       └── res/
+│   └── src/
+│       ├── main/             SHARED — interface only, imports no dji.*
+│       │   ├── AndroidManifest.xml
+│       │   ├── assets/       DJI health-code tables
+│       │   ├── java/drone/test/
+│       │   │   ├── GhostGridApp.kt
+│       │   │   ├── core/
+│       │   │   │   ├── UavBackend.kt        the seam: interface + UavLinkState
+│       │   │   │   ├── Backend.kt           resolves the flavour's factory
+│       │   │   │   ├── Telemetry.kt         one immutable HUD frame
+│       │   │   │   ├── TelemetryStore.kt    latest frame + main-thread push
+│       │   │   │   ├── DemoTelemetry.kt     synthetic frames
+│       │   │   │   ├── SdkPermissions.kt
+│       │   │   │   └── LogBus.kt            rolling mission console
+│       │   │   ├── ui/
+│       │   │   │   ├── BootActivity.kt      link screen
+│       │   │   │   ├── ControlActivity.kt   the control surface
+│       │   │   │   └── widget/  HudOverlay, CyberJoystick, ConsoleView, Palette
+│       │   │   └── util/Fmt.kt
+│       │   └── res/
+│       ├── full/java/drone/test/   ← every file that imports dji.*
+│       │   ├── core/  RealBackend, ProductBus, TelemetrySource, FlightOps,
+│       │   │          VirtualStickController
+│       │   └── ui/widget/FpvSurface.kt      DJICodecManager video sink
+│       └── sim/java/drone/test/    ← no SDK on the classpath at all
+│           ├── core/SimBackend.kt           refuses every flight command
+│           └── ui/widget/FpvSurface.kt      black surface, same class name
 ├── dji-reference/            ← DJI's sample code and docs. READ ONLY, not built.
 ├── build.gradle  settings.gradle  gradle.properties  gradlew  gradle/
 ├── skills/  AGENTS.md        ← agent skills, not app code
@@ -41,13 +42,18 @@ Two clearly separated halves. Mine on top, DJI's underneath.
 
 ## Layer rule
 
-`ui/` never imports `dji.*`. All SDK traffic goes through `core/FlightOps`,
-`core/TelemetrySource` and `core/ProductBus`. That keeps the interface testable
-with `DemoTelemetry` and no aircraft attached.
+`ui/` never imports `dji.*`. All SDK traffic goes through `Backend.uav`, which
+resolves to `RealBackend` in the `full` flavour and `SimBackend` in `sim`. That
+is what makes the emulator build possible: the DJI SDK has no x86 native
+libraries, so a single-variant project could never load on an AVD.
+
+`FpvSurface` is the one class declared twice, once per flavour, under the same
+fully-qualified name. That is deliberate: the shared layout inflates it and the
+shared activity drives it, so neither needs to know which build is running.
 
 ## The one dangerous constant
 
-`core/VirtualStickController.kt` → `SWAP_PITCH_ROLL`.
+`app/src/full/java/drone/test/core/VirtualStickController.kt` → `SWAP_PITCH_ROLL`.
 
 DJI 4.18's `FlightControlData(pitch, roll, yaw, verticalThrottle)` has its first
 two arguments swapped relative to their names; DJI's own sample says so in a code

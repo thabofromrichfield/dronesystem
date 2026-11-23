@@ -2,7 +2,6 @@ package drone.test.core
 
 import android.os.Handler
 import android.os.Looper
-import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -65,7 +64,7 @@ object DemoTelemetry {
                     batteryTempC = 31f + 3f * sin(t * 0.1).toFloat(),
                     recording = (t.toInt() / 20) % 2 == 0,
                     cameraMode = if ((t.toInt() / 20) % 2 == 0) "RECORD_VIDEO" else "SHOOT_PHOTO",
-                    virtualStickOn = abs(VirtualStickController.pitch) + abs(VirtualStickController.roll) > 0.02f,
+                    virtualStickOn = Backend.uav.stickActive(),
                     simulatorOn = false,
                     rcModeSwitch = "P",
                     warning = if ((t.toInt() / 45) % 7 == 0) "PROXIMITY 3.2 M" else null
