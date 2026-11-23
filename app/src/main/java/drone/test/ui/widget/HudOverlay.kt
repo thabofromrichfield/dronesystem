@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.ui.widget
+package drone.test.ui.widget
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -7,8 +7,8 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
 import android.view.View
-import com.thabo.ghostgrid.core.Telemetry
-import com.thabo.ghostgrid.util.Fmt
+import drone.test.core.Telemetry
+import drone.test.util.Fmt
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

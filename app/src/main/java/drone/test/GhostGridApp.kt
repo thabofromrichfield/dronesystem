@@ -1,9 +1,9 @@
-package com.thabo.ghostgrid
+package drone.test
 
 import android.app.Application
 import android.content.Context
 import androidx.multidex.MultiDex
-import com.thabo.ghostgrid.core.LogBus
+import drone.test.core.LogBus
 
 /**
  * Process entry point. Installs MultiDex and the DJI native library loader before

@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.ui.widget
+package drone.test.ui.widget
 
 import android.animation.ValueAnimator
 import android.content.Context

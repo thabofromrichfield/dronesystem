@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.ui
+package drone.test.ui
 
 import android.os.Bundle
 import android.view.View
@@ -6,20 +6,20 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.thabo.ghostgrid.R
-import com.thabo.ghostgrid.core.DemoTelemetry
-import com.thabo.ghostgrid.core.FlightOps
-import com.thabo.ghostgrid.core.LogBus
-import com.thabo.ghostgrid.core.ProductBus
-import com.thabo.ghostgrid.core.Telemetry
-import com.thabo.ghostgrid.core.TelemetrySource
-import com.thabo.ghostgrid.core.TelemetryStore
-import com.thabo.ghostgrid.core.VirtualStickController
-import com.thabo.ghostgrid.ui.widget.ConsoleView
-import com.thabo.ghostgrid.ui.widget.CyberJoystick
-import com.thabo.ghostgrid.ui.widget.FpvSurface
-import com.thabo.ghostgrid.ui.widget.HudOverlay
-import com.thabo.ghostgrid.util.Fmt
+import drone.test.R
+import drone.test.core.DemoTelemetry
+import drone.test.core.FlightOps
+import drone.test.core.LogBus
+import drone.test.core.ProductBus
+import drone.test.core.Telemetry
+import drone.test.core.TelemetrySource
+import drone.test.core.TelemetryStore
+import drone.test.core.VirtualStickController
+import drone.test.ui.widget.ConsoleView
+import drone.test.ui.widget.CyberJoystick
+import drone.test.ui.widget.FpvSurface
+import drone.test.ui.widget.HudOverlay
+import drone.test.util.Fmt
 
 /**
  * The control surface. Full-screen FPV with head-up glass, two virtual sticks and

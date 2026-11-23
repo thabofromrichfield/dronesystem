@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.thabo.ghostgrid">
+    package="drone.test">
 
     <!-- ===================== DJI SDK requirements ===================== -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
@@ -55,7 +55,7 @@
 
         <!-- Put your DJI developer App Key here. Get one at
              https://account.dji.com/register?appId=71#/developer
-             It must match the package name com.thabo.ghostgrid. -->
+             It must match the package name drone.test. -->
         <meta-data
             android:name="com.dji.sdk.API_KEY"
             android:value="@string/dji_api_key" />

@@ -53,4 +53,4 @@
 -keep class org.greenrobot.eventbus.** { *; }
 
 # GHOSTGRID's own classes are referenced from XML layouts.
--keep class com.thabo.ghostgrid.ui.widget.** { *; }
+-keep class drone.test.ui.widget.** { *; }

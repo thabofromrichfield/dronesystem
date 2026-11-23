@@ -14,7 +14,7 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        applicationId "com.thabo.ghostgrid"
+        applicationId "drone.test"
         minSdkVersion 23
         targetSdkVersion 33
         multiDexEnabled true

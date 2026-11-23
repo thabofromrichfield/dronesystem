@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.ui.widget
+package drone.test.ui.widget
 
 import android.content.Context
 import android.graphics.Color
@@ -12,7 +12,7 @@ import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import com.thabo.ghostgrid.core.LogBus
+import drone.test.core.LogBus
 
 /**
  * Scrolling mission console. Every SDK result lands here with a timestamp so the

@@ -1,10 +1,10 @@
-package com.thabo.ghostgrid.ui.widget
+package drone.test.ui.widget
 
 import android.content.Context
 import android.util.AttributeSet
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import com.thabo.ghostgrid.core.LogBus
+import drone.test.core.LogBus
 import dji.midware.usb.P3.UsbAccessoryService
 import dji.sdk.camera.VideoFeeder
 import dji.sdk.codec.DJICodecManager

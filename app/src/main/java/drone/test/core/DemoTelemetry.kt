@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.core
+package drone.test.core
 
 import android.os.Handler
 import android.os.Looper

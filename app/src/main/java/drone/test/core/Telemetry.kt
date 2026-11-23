@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.core
+package drone.test.core
 
 import kotlin.math.atan2
 import kotlin.math.cos

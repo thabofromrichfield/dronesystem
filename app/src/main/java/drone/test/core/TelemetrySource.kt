@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.core
+package drone.test.core
 
 import dji.common.battery.BatteryState
 import dji.common.camera.SystemState

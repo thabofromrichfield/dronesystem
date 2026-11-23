@@ -10,7 +10,7 @@ Two clearly separated halves. Mine on top, DJI's underneath.
 │   └── src/main/
 │       ├── AndroidManifest.xml
 │       ├── assets/           DJI health-code tables
-│       ├── java/com/thabo/ghostgrid/
+│       ├── java/drone/test/
 │       │   ├── GhostGridApp.kt
 │       │   ├── core/         SDK-facing code, no Android views
 │       │   │   ├── ProductBus.kt           registerApp + connect/disconnect

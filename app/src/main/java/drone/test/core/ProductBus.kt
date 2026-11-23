@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.core
+package drone.test.core
 
 import android.content.Context
 import dji.common.error.DJIError

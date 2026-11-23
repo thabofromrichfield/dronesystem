@@ -5,7 +5,7 @@
     <!--
       Paste your DJI Mobile SDK App Key below.
       Register the app at https://account.dji.com/register?appId=71#/developer
-      The key is bound to package name: com.thabo.ghostgrid
+      The key is bound to package name: drone.test
     -->
     <string name="dji_api_key">PASTE_YOUR_DJI_APP_KEY_HERE</string>
 

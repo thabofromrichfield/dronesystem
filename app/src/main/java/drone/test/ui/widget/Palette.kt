@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.ui.widget
+package drone.test.ui.widget
 
 /** Canvas colours. Mirrors res/values/colors.xml — keep the two in sync. */
 object Palette {

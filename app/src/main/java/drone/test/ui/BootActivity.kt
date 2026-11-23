@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.ui
+package drone.test.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -6,13 +6,13 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.thabo.ghostgrid.R
-import com.thabo.ghostgrid.core.DemoTelemetry
-import com.thabo.ghostgrid.core.LogBus
-import com.thabo.ghostgrid.core.ProductBus
-import com.thabo.ghostgrid.core.SdkPermissions
-import com.thabo.ghostgrid.core.TelemetryStore
-import com.thabo.ghostgrid.util.Fmt
+import drone.test.R
+import drone.test.core.DemoTelemetry
+import drone.test.core.LogBus
+import drone.test.core.ProductBus
+import drone.test.core.SdkPermissions
+import drone.test.core.TelemetryStore
+import drone.test.util.Fmt
 
 /**
  * Link screen: grants runtime permissions, registers the App Key with DJI, and

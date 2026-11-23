@@ -61,7 +61,7 @@ android.suppressUnsupportedCompileSdk=33
 ## 4. Get a DJI App Key
 
 1. Go to https://account.dji.com/register?appId=71#/developer
-2. Create an app. **Package name must be exactly** `com.thabo.ghostgrid`
+2. Create an app. **Package name must be exactly** `drone.test`
 3. Copy the App Key.
 
 Paste it into `app/src/main/res/values/strings.xml`:

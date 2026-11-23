@@ -1,4 +1,4 @@
-package com.thabo.ghostgrid.core
+package drone.test.core
 
 import dji.common.camera.SettingsDefinitions
 import dji.common.error.DJIError

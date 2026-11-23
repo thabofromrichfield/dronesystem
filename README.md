@@ -42,7 +42,7 @@ controller; the phone is the head-up glass either way.
 
 Two halves, deliberately separate:
 
-- **`app/`** — GHOSTGRID. My code. Package `com.thabo.ghostgrid`.
+- **`app/`** — GHOSTGRID. My code. Package `drone.test`.
 - **`dji-reference/`** — DJI's unmodified sample app and API docs. Read-only, **not compiled**.
 
 Full tree in [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md).
@@ -78,7 +78,7 @@ instead of pitching forward, set the flag to `false`.
 
 - Android 6.0 (API 23) or newer, `armeabi-v7a` or `arm64-v8a`. No x86 emulator.
 - A DJI aircraft supported by Mobile SDK V4 4.18 and its remote controller.
-- A DJI developer App Key registered against package `com.thabo.ghostgrid`.
+- A DJI developer App Key registered against package `drone.test`.
 - Internet on first launch — the App Key is validated against DJI's servers.
 
 ## License
