@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  USB accessories the app should be woken up for. Mirrors the filter DJI ships
+  inside the SDK AAR; declared locally so the manifest reference always resolves.
+-->
+<resources>
+    <usb-accessory model="T600" manufacturer="DJI" />
+    <usb-accessory model="T610" manufacturer="DJI" />
+    <usb-accessory model="ZL0011" manufacturer="DJI" />
+    <usb-accessory model="ZL0012" manufacturer="DJI" />
+    <usb-accessory model="GL300E" manufacturer="DJI" />
+    <usb-accessory model="GL300F" manufacturer="DJI" />
+    <usb-accessory model="GL300C" manufacturer="DJI" />
+    <usb-accessory model="GL300N" manufacturer="DJI" />
+    <usb-accessory model="GL300" manufacturer="DJI" />
+    <usb-accessory model="WM220" manufacturer="DJI" />
+    <usb-accessory model="WM221" manufacturer="DJI" />
+    <usb-accessory model="WM230" manufacturer="DJI" />
+    <usb-accessory model="AG410" manufacturer="DJI" />
+    <usb-accessory model="PM320" manufacturer="DJI" />
+    <usb-accessory model="M300RTK" manufacturer="DJI" />
+    <usb-accessory model="M350RTK" manufacturer="DJI" />
+    <usb-accessory model="com.dji.logiclink" manufacturer="DJI" />
+</resources>

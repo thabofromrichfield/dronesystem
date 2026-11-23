@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Keep in sync with ui/widget/Palette.kt -->
+    <color name="ghost_black">#04070A</color>
+    <color name="ghost_panel">#B3040B10</color>
+    <color name="ghost_neon">#00E5FF</color>
+    <color name="ghost_neon_dim">#5500E5FF</color>
+    <color name="ghost_green">#00FF9C</color>
+    <color name="ghost_amber">#FFB300</color>
+    <color name="ghost_red">#FF1744</color>
+    <color name="ghost_white">#E6F7FF</color>
+    <color name="ghost_grey">#78909C</color>
+</resources>

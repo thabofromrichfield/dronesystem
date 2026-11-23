@@ -1,0 +1,5 @@
+// GHOSTGRID UAV — project settings
+// Only :app is part of my project. dji-reference/ is read-only vendor sample code
+// and is deliberately NOT included in the build.
+rootProject.name = 'GHOSTGRID'
+include ':app'

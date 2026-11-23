@@ -1,0 +1,28 @@
+// GHOSTGRID UAV — root build script
+// Toolchain pinned to the exact versions DJI Mobile SDK V4 4.18 is proven against
+// (AGP 4.2.2 / Gradle 6.7.1 / Kotlin 1.5.10). Do not bump these casually:
+// DJI SDK 4.18 ships prebuilt native libs and Kotlin metadata from this era.
+
+buildscript {
+    ext.kotlin_version = '1.5.10'
+    ext.androidXCore = "1.6.0"
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.2.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
