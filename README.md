@@ -54,6 +54,19 @@ interface and is DJI-free by construction; `src/full` holds every class that
 imports `dji.*`; `src/sim` supplies a stub backend with no SDK on the classpath.
 Nothing in `ui/` imports `dji.*`, and a check in the build notes enforces it.
 
+## Running it
+
+| Where | Command | What you get |
+| --- | --- | --- |
+| Browser, no toolchain | `python3 -m http.server 8080 --directory preview` | visual preview of the whole interface |
+| Android emulator | `./gradlew installSimDebug` | the real app, synthetic telemetry, x86_64 |
+| Physical phone + aircraft | `./gradlew assembleFullDebug` | the real app, real flight |
+
+`preview/index.html` is a browser port of the HUD, joysticks and mission console.
+It links no DJI SDK and sends nothing anywhere — it is a visual reference, not
+the app. VS Code setup and the full emulator path are in [VSCODE.md](VSCODE.md);
+Android Studio path in [SETUP.md](SETUP.md).
+
 ## Repository layout
 
 Two halves, deliberately separate:
