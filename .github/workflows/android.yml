@@ -1,0 +1,268 @@
+name: Android build
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      compile_full_without_key:
+        description: 'Compile-check the full flight code without a DJI App Key (no APK produced)'
+        type: boolean
+        default: false
+
+# Gradle 6.7.1 + AGP 4.2.2 need JDK 11. The runners default to 17 or 21, which
+# fails with "Unsupported class file major version" before anything else runs.
+env:
+  JAVA_VERSION: '11'
+  JAVA_DIST: 'temurin'
+  # One stable release holds the downloadable APKs. Actions artifacts need a
+  # GitHub login to fetch and expire; a Release is a permanent link sitting on
+  # the repository front page.
+  RELEASE_TAG: 'latest-build'
+
+permissions:
+  contents: write
+
+jobs:
+  # ---- fast structural checks, no toolchain needed -----------------------
+  verify:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Structural checks
+        run: python3 tools/verify_structure.py
+
+  # ---- interface build, always works, no secrets needed -------------------
+  sim:
+    runs-on: ubuntu-22.04
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DIST }}
+      - name: Ensure the SDK packages this build needs
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SM" ] || SM="$(command -v sdkmanager)"
+          yes | "$SM" --licenses > /dev/null 2>&1 || true
+          # AGP 4.2.2 defaults to build-tools 30.0.2; compileSdk 33 needs platform 33.
+          "$SM" "platforms;android-33" "build-tools;30.0.2" "build-tools;33.0.2"
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build simDebug
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleSimDebug 2>&1 | tee build.log
+
+      # The sandbox maintaining this workflow cannot reach the Actions log blob
+      # host, so route failures into annotations, which the API does expose.
+      - name: Report failure as annotations
+        if: failure()
+        run: |
+          [ -f build.log ] || { echo "::error::no build.log produced"; exit 0; }
+          {
+            echo "===== Kotlin / Java errors ====="
+            grep -E "^e: |error: " build.log | head -40
+            echo "===== What went wrong ====="
+            sed -n '/What went wrong/,/^\* Try/p' build.log | head -20
+          } > fail.txt
+          n=0
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            echo "::error::${line}"
+            n=$((n+1))
+            [ "$n" -ge 30 ] && break
+          done < fail.txt
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: ghostgrid-sim-debug
+          path: app/build/outputs/apk/sim/debug/*.apk
+          if-no-files-found: error
+
+      - name: Publish the APK to the repository download page
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          gh release create "$RELEASE_TAG" \
+            --title "GHOSTGRID - latest build" \
+            --notes "Built automatically from the newest commit on this branch." \
+            --target "$GITHUB_SHA" 2>/dev/null || true
+          gh release upload "$RELEASE_TAG" app/build/outputs/apk/sim/debug/*.apk --clobber
+          echo "::notice::APK published to the latest-build release"
+
+  # ---- real aircraft build, needs the DJI_API_KEY repository secret --------
+  #
+  # The App Key is never committed. Set it at
+  #   Settings → Secrets and variables → Actions → New repository secret
+  #   name: DJI_API_KEY
+  # and the key must be registered against package name: drone.test
+  #
+  # Without the secret this job warns and exits 0 rather than failing the run,
+  # so the sim build stays green.
+  full:
+    runs-on: ubuntu-22.04
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for the DJI App Key
+        id: key
+        env:
+          DJI_KEY: ${{ secrets.DJI_API_KEY }}
+        run: |
+          if [ -z "$DJI_KEY" ]; then
+            echo "::warning::DJI_API_KEY secret is not set. Skipping the full build."
+            echo "::warning::Add it under Settings -> Secrets and variables -> Actions."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 - <<'PY'
+          import os
+          p = 'app/src/main/res/values/strings.xml'
+          s = open(p, encoding='utf-8').read()
+          needle = 'PASTE_YOUR_DJI_APP_KEY_HERE'
+          if needle not in s:
+              raise SystemExit('placeholder not found — strings.xml layout changed')
+          open(p, 'w', encoding='utf-8').write(s.replace(needle, os.environ['DJI_KEY']))
+          print('App Key injected from the DJI_API_KEY secret')
+          PY
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v5
+        if: steps.key.outputs.available == 'true'
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DIST }}
+
+      - name: Ensure the SDK packages this build needs
+        if: steps.key.outputs.available == 'true'
+        run: |
+          SM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SM" ] || SM="$(command -v sdkmanager)"
+          yes | "$SM" --licenses > /dev/null 2>&1 || true
+          "$SM" "platforms;android-33" "build-tools;30.0.2" "build-tools;33.0.2"
+
+      - name: Grant execute permission for gradlew
+        if: steps.key.outputs.available == 'true'
+        run: chmod +x gradlew
+
+      # DJI SDK 4.18 is a large download. This is the slow step.
+      - name: Build fullDebug
+        if: steps.key.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleFullDebug 2>&1 | tee build.log
+
+
+      # The sandbox maintaining this workflow cannot reach the Actions log blob
+      # host, so route failures into annotations, which the API does expose.
+      - name: Report failure as annotations
+        if: failure()
+        run: |
+          [ -f build.log ] || { echo "::error::no build.log produced"; exit 0; }
+          {
+            echo "===== Kotlin / Java errors ====="
+            grep -E "^e: |error: " build.log | head -40
+            echo "===== What went wrong ====="
+            sed -n '/What went wrong/,/^\* Try/p' build.log | head -20
+          } > fail.txt
+          n=0
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            echo "::error::${line}"
+            n=$((n+1))
+            [ "$n" -ge 30 ] && break
+          done < fail.txt
+      - uses: actions/upload-artifact@v4
+        if: steps.key.outputs.available == 'true' && success()
+        with:
+          name: ghostgrid-full-debug
+          path: app/build/outputs/apk/full/debug/*.apk
+          if-no-files-found: error
+
+      - name: Publish the APK to the repository download page
+        if: steps.key.outputs.available == 'true' && success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          gh release create "$RELEASE_TAG" \
+            --title "GHOSTGRID - latest build" \
+            --notes "Built automatically from the newest commit on this branch." \
+            --target "$GITHUB_SHA" 2>/dev/null || true
+          gh release upload "$RELEASE_TAG" app/build/outputs/apk/full/debug/*.apk --clobber
+          echo "::notice::APK published to the latest-build release"
+
+  # ---- compile-check the flight code with no App Key ---------------------
+  #
+  # The full APK needs a real key to register with DJI, but compiling src/full
+  # needs only the SDK on the classpath. This runs on every push and PR, not
+  # just on manual dispatch: src/full is the actual product, and the `full` job
+  # stays skipped until a DJI_API_KEY secret exists, so without this job the
+  # flight code would never be compiled at all.
+  #
+  # It DOES upload what it builds, under an unmistakable name. That APK installs
+  # and launches, but registerApp is rejected and it will never reach an
+  # aircraft - the placeholder key is not a key. Add the DJI_API_KEY secret and
+  # the `full` job produces the real one.
+  full_compile_check:
+    runs-on: ubuntu-22.04
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DIST }}
+      - name: Ensure the SDK packages this build needs
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SM" ] || SM="$(command -v sdkmanager)"
+          yes | "$SM" --licenses > /dev/null 2>&1 || true
+          # AGP 4.2.2 defaults to build-tools 30.0.2; compileSdk 33 needs platform 33.
+          "$SM" "platforms;android-33" "build-tools;30.0.2" "build-tools;33.0.2"
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Compile fullDebug against dji-sdk 4.18
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleFullDebug -PallowPlaceholderKey=true 2>&1 | tee build.log
+
+      # The sandbox maintaining this workflow cannot reach the Actions log blob
+      # host, so route failures into annotations, which the API does expose.
+      - name: Report failure as annotations
+        if: failure()
+        run: |
+          [ -f build.log ] || { echo "::error::no build.log produced"; exit 0; }
+          {
+            echo "===== Kotlin / Java errors ====="
+            grep -E "^e: |error: " build.log | head -40
+            echo "===== What went wrong ====="
+            sed -n '/What went wrong/,/^\* Try/p' build.log | head -20
+          } > fail.txt
+          n=0
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            echo "::error::${line}"
+            n=$((n+1))
+            [ "$n" -ge 30 ] && break
+          done < fail.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ghostgrid-full-debug-NO-APP-KEY
+          path: app/build/outputs/apk/full/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30

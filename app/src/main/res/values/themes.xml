@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base of the Ghost.* family. Dotted style names inherit implicitly from
+         the part before the last dot, so `Ghost.Mono` requires a style named
+         `Ghost` to exist or AAPT2 fails with "resource style/Ghost not found". -->
+    <style name="Ghost" parent="" />
+
+    <style name="GhostTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/ghost_black</item>
+        <item name="android:colorBackground">@color/ghost_black</item>
+        <item name="android:typeface">monospace</item>
+        <item name="colorPrimary">@color/ghost_neon</item>
+        <item name="colorPrimaryDark">@color/ghost_black</item>
+        <item name="colorAccent">@color/ghost_green</item>
+        <item name="android:textColor">@color/ghost_white</item>
+    </style>
+
+    <style name="GhostTheme.Fullscreen">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+    <style name="Ghost.Button" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:background">@drawable/btn_cyber</item>
+        <item name="android:textColor">@color/ghost_neon</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:typeface">monospace</item>
+        <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingRight">6dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:paddingTop">9dp</item>
+        <item name="android:paddingBottom">9dp</item>
+    </style>
+
+    <style name="Ghost.Button.Danger">
+        <item name="android:background">@drawable/btn_cyber_red</item>
+        <item name="android:textColor">@color/ghost_red</item>
+    </style>
+
+    <style name="Ghost.Button.Safe">
+        <item name="android:background">@drawable/btn_cyber_green</item>
+        <item name="android:textColor">@color/ghost_green</item>
+    </style>
+
+    <style name="Ghost.Mono">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textColor">@color/ghost_white</item>
+    </style>
+</resources>

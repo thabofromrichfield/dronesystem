@@ -1,0 +1,23 @@
+{
+  // Gradle 6.7.1 runs on Java 8-15 only. Point VS Code at a JDK 11 or the
+  // daemon dies with "Unsupported class file major version".
+  "java.configuration.runtimes": [
+    { "name": "JavaSE-11", "path": "/usr/lib/jvm/java-11-openjdk-amd64", "default": true }
+  ],
+  "java.import.gradle.java.home": "/usr/lib/jvm/java-11-openjdk-amd64",
+  "java.import.gradle.enabled": true,
+  "java.import.gradle.wrapper.enabled": true,
+  "kotlin.indexing.enabled": true,
+  "files.exclude": {
+    "**/build": true,
+    "**/.gradle": true,
+    "**/*.iml": true
+  },
+  "search.exclude": {
+    "dji-reference/**": true,
+    "**/build": true,
+    "**/.gradle": true
+  },
+  "files.associations": { "*.kt": "kotlin" },
+  "editor.formatOnSave": false
+}

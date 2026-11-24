@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  USB accessories this app should be woken up for.
+
+  Deliberately matched on manufacturer only. An omitted attribute is not
+  filtered on, so this matches every accessory that reports manufacturer "DJI"
+  rather than a hand-maintained list of model strings.
+
+  That matters: DJI's own sample references @xml/accessory_filter but ships no
+  such file — the authoritative copy lives inside the SDK AAR, and this local
+  copy overrides it. A guessed model list that missed your controller would make
+  the app fail to auto-launch on plug-in, with no error anywhere. Matching on
+  manufacturer alone cannot be wrong in that direction.
+
+  Drop this file entirely if you would rather use the AAR's copy verbatim; the
+  manifest reference still resolves from the library resources.
+-->
+<resources>
+    <usb-accessory manufacturer="DJI" />
+</resources>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GHOSTGRID</string>
+
+    <!--
+      Paste your DJI Mobile SDK App Key below.
+      Register the app at https://account.dji.com/register?appId=71#/developer
+      The key is bound to package name: drone.test
+    -->
+    <string name="dji_api_key">PASTE_YOUR_DJI_APP_KEY_HERE</string>
+
+    <string name="boot_title">G H O S T G R I D</string>
+    <string name="boot_sub">UAV TACTICAL CONTROL // DJI MOBILE SDK 4.18</string>
+    <string name="boot_init">INITIALISE LINK</string>
+    <string name="boot_enter">ENTER GRID</string>
+    <string name="boot_sim">ENTER GRID — SIM FEED</string>
+    <string name="boot_hint">SIM FEED renders synthetic telemetry so the interface can be\nexercised with no aircraft attached. It cannot command a drone.</string>
+
+    <string name="btn_stick">STICK</string>
+    <string name="btn_takeoff">TAKEOFF</string>
+    <string name="btn_land">LAND</string>
+    <string name="btn_confirm_land">CONFIRM\nLAND</string>
+    <string name="btn_cancel_land">ABORT\nLAND</string>
+    <string name="btn_rth">RTH</string>
+    <string name="btn_hover">HOVER</string>
+    <string name="btn_photo">CAPTURE</string>
+    <string name="btn_record">RECORD</string>
+    <string name="btn_record_on">REC ●</string>
+    <string name="btn_gimbal_up">GIM +</string>
+    <string name="btn_gimbal_down">GIM −</string>
+    <string name="btn_gimbal_stop">GIM 0</string>
+    <string name="btn_gimbal_horizon">HORIZON</string>
+    <string name="btn_gimbal_down45">DOWN 45</string>
+    <string name="btn_sim">SIM</string>
+    <string name="btn_console">LOG</string>
+    <string name="btn_limits">LIMITS</string>
+
+    <string name="stick_left_label">THR / YAW</string>
+    <string name="stick_right_label">PITCH / ROLL</string>
+
+    <string name="exit_confirm">Leave the grid? The aircraft will keep flying. Use RTH first if it is airborne.</string>
+    <string name="exit_yes">LEAVE</string>
+    <string name="exit_no">STAY</string>
+</resources>

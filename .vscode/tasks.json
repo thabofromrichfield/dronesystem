@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "emulator: create AVD (API 33 x86_64)",
+      "type": "shell",
+      "command": "yes | sdkmanager --licenses && sdkmanager \"platform-tools\" \"platforms;android-33\" \"build-tools;33.0.2\" \"emulator\" \"system-images;android-33;google_apis;x86_64\" && avdmanager create avd -n ghostgrid_sim -k \"system-images;android-33;google_apis;x86_64\" -d pixel_5 --force",
+      "problemMatcher": []
+    },
+    {
+      "label": "emulator: start",
+      "type": "shell",
+      "command": "emulator -avd ghostgrid_sim -no-snapshot-save -gpu host",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "build: simDebug (emulator)",
+      "type": "shell",
+      "command": "./gradlew assembleSimDebug",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "install: simDebug onto emulator",
+      "type": "shell",
+      "command": "./gradlew installSimDebug && adb shell am start -n drone.test.sim/drone.test.ui.BootActivity",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "build: fullDebug (real aircraft, ARM)",
+      "type": "shell",
+      "command": "./gradlew assembleFullDebug",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "verify: structural checks",
+      "type": "shell",
+      "command": "python3 tools/verify_structure.py",
+      "problemMatcher": []
+    },
+    {
+      "label": "logcat: GHOSTGRID only",
+      "type": "shell",
+      "command": "adb logcat -c && adb logcat | grep --line-buffered -iE 'ghostgrid|drone.test|dji'",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "preview: serve web HUD",
+      "type": "shell",
+      "command": "python3 -m http.server 8080 --directory preview --bind 0.0.0.0",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

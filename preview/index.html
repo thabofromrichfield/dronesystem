@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GHOSTGRID — interface preview</title>
+<!--
+  Browser preview of the GHOSTGRID control surface.
+
+  This is a visual port of the Android app, not the Android app. It reproduces
+  HudOverlay.kt, CyberJoystick.kt, ConsoleView.kt and DemoTelemetry.kt so the
+  interface can be reviewed without a JDK, an Android SDK or an emulator.
+
+  It cannot talk to a drone. It links no DJI SDK and sends nothing anywhere.
+  For the real thing: ./gradlew installSimDebug  (emulator)
+                       ./gradlew assembleFullDebug  (aircraft)
+-->
+<style>
+  :root {
+    --black: #04070A; --panel: rgba(4,11,16,0.70); --neon: #00E5FF;
+    --green: #00FF9C; --amber: #FFB300; --red: #FF1744;
+    --white: #E6F7FF; --grey: rgba(120,144,156,0.55);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--black); overflow: hidden; }
+  body { font-family: ui-monospace, "DejaVu Sans Mono", Menlo, Consolas, monospace; color: var(--white); }
+  #stage { position: relative; width: 100vw; height: 100vh; background: #000; }
+  canvas { display: block; }
+  #hud { position: absolute; inset: 0; }
+
+  .chip {
+    position: absolute; background: var(--panel); border: 1px solid rgba(0,229,255,0.33);
+    padding: 5px 8px; font-size: 11px; letter-spacing: 0.04em; white-space: nowrap;
+  }
+  #chipLink { top: 8px; left: 8px; color: var(--green); }
+  #topRight { top: 8px; right: 8px; display: flex; gap: 6px; background: none; border: 0; padding: 0; }
+
+  button {
+    font-family: inherit; font-size: 11px; letter-spacing: 0.05em; cursor: pointer;
+    background: var(--panel); color: var(--neon); border: 1px solid var(--neon);
+    padding: 9px 10px; min-width: 58px; white-space: nowrap;
+  }
+  button:active { background: rgba(0,229,255,0.2); }
+  button.danger { color: var(--red); border-color: var(--red); }
+  button.danger:active { background: rgba(255,23,68,0.25); }
+  button.safe { color: var(--green); border-color: var(--green); }
+  button.safe:active { background: rgba(0,255,156,0.2); }
+
+  #rail {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px; max-width: 92vw; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  #rail::-webkit-scrollbar { display: none; }
+
+  .stick { position: absolute; bottom: 62px; width: 124px; height: 124px; touch-action: none; }
+  #stickL { left: 10px; } #stickR { right: 10px; }
+
+  #console {
+    position: absolute; bottom: 58px; left: 50%; transform: translateX(-50%);
+    width: 440px; max-width: 92vw; height: 150px; display: none; flex-direction: column;
+    background: rgba(4,7,10,0.80); border: 1px solid rgba(0,229,255,0.33);
+  }
+  #console.on { display: flex; }
+  #consoleHead {
+    padding: 6px 10px; font-size: 11px; color: var(--neon);
+    background: rgba(0,229,255,0.18); flex: 0 0 auto;
+  }
+  #consoleBody { flex: 1 1 auto; overflow-y: auto; padding: 4px 10px 8px; font-size: 10px; line-height: 1.45; }
+  #consoleBody div { white-space: pre-wrap; }
+
+  #note {
+    position: absolute; top: 46px; left: 8px; font-size: 9px; color: var(--grey);
+    letter-spacing: 0.06em; max-width: 240px; line-height: 1.5;
+  }
+  @media (max-width: 720px) { #note { display: none; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="hud"></canvas>
+
+  <div id="chipLink" class="chip">SIM  SIM-AIRFRAME  BAT --%  SAT 16</div>
+  <div id="note">BROWSER PREVIEW — not the Android app.<br>Joysticks respond. Commands log and refuse.</div>
+
+  <div id="topRight">
+    <button id="btnLimits">LIMITS</button>
+    <button id="btnConsole">LOG</button>
+  </div>
+
+  <canvas id="stickL" class="stick"></canvas>
+  <canvas id="stickR" class="stick"></canvas>
+
+  <div id="console">
+    <div id="consoleHead">// MISSION CONSOLE</div>
+    <div id="consoleBody"></div>
+  </div>
+
+  <div id="rail">
+    <button id="btnStick" class="safe">STICK</button>
+    <button id="btnTakeoff" class="safe">TAKEOFF</button>
+    <button id="btnHover">HOVER</button>
+    <button id="btnLand" class="danger">LAND</button>
+    <button id="btnConfirm" class="danger">CONFIRM<br>LAND</button>
+    <button id="btnCancel" class="danger">ABORT<br>LAND</button>
+    <button id="btnRth" class="danger">RTH</button>
+    <button id="btnPhoto">CAPTURE</button>
+    <button id="btnRecord">RECORD</button>
+    <button id="btnGimUp">GIM +</button>
+    <button id="btnGimDn">GIM −</button>
+    <button id="btnGimStop">GIM 0</button>
+    <button id="btnHorizon">HORIZON</button>
+    <button id="btnDown45">DOWN 45</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- palette, mirrors ui/widget/Palette.kt ---------- */
+const P = {
+  black:  '#04070A', panel: 'rgba(4,11,16,0.70)',
+  neon:   '#00E5FF', neonDim: 'rgba(0,229,255,0.33)',
+  green:  '#00FF9C', amber: '#FFB300', red: '#FF1744',
+  white:  '#E6F7FF', grey: 'rgba(120,144,156,0.55)',
+  ladder: 'rgba(230,247,255,0.67)'
+};
+const MONO = 'ui-monospace, "DejaVu Sans Mono", Menlo, Consolas, monospace';
+
+/* ---------- formatting, mirrors util/Fmt.kt ---------- */
+const Fmt = {
+  num(v, d = 1) { return (v === null || !isFinite(v)) ? '--' : v.toFixed(d); },
+  dist(m) { return !isFinite(m) ? '--' : (Math.abs(m) < 1000 ? m.toFixed(0) : (m / 1000).toFixed(2)); },
+  distUnit(m) { return (isFinite(m) && Math.abs(m) >= 1000) ? 'km' : 'm'; },
+  heading(d) { const n = ((d % 360) + 360) % 360; return String(Math.floor(n)).padStart(3, '0'); },
+  cardinal(d) {
+    const names = ['N','NE','E','SE','S','SW','W','NW'];
+    const n = ((d % 360) + 360) % 360;
+    return names[Math.floor(((n + 22.5) / 45) % 8)];
+  },
+  mmss(s) {
+    s = Math.max(0, Math.floor(s));
+    return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  },
+  battery(p) { return p < 0 ? '--' : p + '%'; }
+};
+
+/* ---------- mission console, mirrors ui/widget/ConsoleView.kt ---------- */
+const consoleBody = document.getElementById('consoleBody');
+const MAX_LINES = 200;
+let lineCount = 0;
+function stamp() {
+  const d = new Date();
+  const p = (n, w = 2) => String(n).padStart(w, '0');
+  return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '.' + p(d.getMilliseconds(), 3);
+}
+function log(level, text) {
+  const color = { OK: P.green, WARN: P.amber, ERR: P.red, INFO: P.white }[level] || P.white;
+  const row = document.createElement('div');
+  row.style.color = color;
+  row.textContent = stamp() + ' ' + level[0] + ' ' + text;
+  consoleBody.appendChild(row);
+  if (++lineCount > MAX_LINES) { consoleBody.removeChild(consoleBody.firstChild); lineCount--; }
+  consoleBody.scrollTop = consoleBody.scrollHeight;
+}
+const Log = {
+  info: t => log('INFO', t), ok: t => log('OK', t),
+  warn: t => log('WARN', t), err: t => log('ERR', t)
+};
+
+/* ---------- synthetic telemetry, mirrors core/DemoTelemetry.kt ---------- */
+const T = {
+  aircraftModel: 'SIM-AIRFRAME', linked: true, demo: true,
+  isFlying: true, isGoingHome: false, flightMode: 'GPS', flightTimeSec: 0,
+  altitudeM: 60, groundSpeedMs: 8.4, verticalSpeedMs: 0, distanceFromHomeM: 120,
+  latitude: -26.2041, longitude: 28.0473, homeLatitude: -26.2041, homeLongitude: 28.0473,
+  pitchDeg: 0, rollDeg: 0, headingDeg: 90, gimbalPitchDeg: -30,
+  satellites: 16, batteryPercent: 92, batteryVolts: 15.8, batteryTempC: 31,
+  recording: false, cameraMode: 'SHOOT_PHOTO',
+  virtualStickOn: false, simulatorOn: false, rcModeSwitch: 'P', warning: null
+};
+const ORIGIN_LAT = -26.2041, ORIGIN_LON = 28.0473;
+let tick = 0;
+function stepTelemetry() {
+  tick += 0.1;
+  const circle = (tick * 0.25) % (Math.PI * 2);
+  const radiusM = 120;
+  const dLat = (radiusM * Math.cos(circle)) / 111320;
+  const dLon = (radiusM * Math.sin(circle)) / (111320 * Math.cos(ORIGIN_LAT * Math.PI / 180));
+
+  T.flightTimeSec = tick;
+  T.altitudeM = 60 + 25 * Math.sin(tick * 0.15);
+  T.groundSpeedMs = 8.4 + Math.sin(tick * 0.4) * 0.8;
+  T.verticalSpeedMs = 25 * 0.15 * Math.cos(tick * 0.15);
+  T.distanceFromHomeM = radiusM;
+  T.latitude = ORIGIN_LAT + dLat;
+  T.longitude = ORIGIN_LON + dLon;
+  T.pitchDeg = 4 * Math.sin(tick * 0.5);
+  T.rollDeg = 18 * Math.sin(circle);
+  const raw = (circle * 180 / Math.PI) + 90;
+  T.headingDeg = ((raw % 360) + 360) % 360;
+  T.gimbalPitchDeg = -30 + 20 * Math.sin(tick * 0.2);
+  T.satellites = 16;
+  T.batteryPercent = Math.max(3, 92 - Math.floor(tick / 6));
+  T.batteryVolts = 15.8 - tick / 600;
+  T.batteryTempC = 31 + 3 * Math.sin(tick * 0.1);
+  T.recording = (Math.floor(tick / 20) % 2) === 0;
+  T.cameraMode = T.recording ? 'RECORD_VIDEO' : 'SHOOT_PHOTO';
+  T.virtualStickOn = Math.abs(stick.pitch) + Math.abs(stick.roll) > 0.02;
+  T.warning = (Math.floor(tick / 45) % 7 === 0) ? 'PROXIMITY 3.2 M' : null;
+}
+
+/* ---------- HUD, mirrors ui/widget/HudOverlay.kt ---------- */
+const hud = document.getElementById('hud');
+const ctx = hud.getContext('2d');
+let W = 0, H = 0, dpr = 1, pxPerDeg = 8;
+
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  W = window.innerWidth; H = window.innerHeight;
+  hud.width = W * dpr; hud.height = H * dpr;
+  hud.style.width = W + 'px'; hud.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pxPerDeg = H / 42;
+}
+window.addEventListener('resize', resize);
+
+function line(x1, y1, x2, y2, style, w) {
+  ctx.strokeStyle = style; ctx.lineWidth = w || 2;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+}
+function text(s, x, y, { color = P.neon, size = 26, align = 'left', bold = false } = {}) {
+  ctx.fillStyle = color;
+  ctx.font = (bold ? 'bold ' : '') + size + 'px ' + MONO;
+  ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(s, x, y);
+}
+function box(x, y, w, h, fill, stroke, lw) {
+  if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w, h); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 2; ctx.strokeRect(x, y, w, h); }
+}
+
+function drawCorners() {
+  const arm = Math.min(W, H) * 0.07, pad = 14;
+  ctx.strokeStyle = P.neon; ctx.lineWidth = Math.max(2, W / 640);
+  ctx.beginPath();
+  ctx.moveTo(pad, pad + arm); ctx.lineTo(pad, pad); ctx.lineTo(pad + arm, pad);
+  ctx.moveTo(W - pad - arm, pad); ctx.lineTo(W - pad, pad); ctx.lineTo(W - pad, pad + arm);
+  ctx.moveTo(W - pad, H - pad - arm); ctx.lineTo(W - pad, H - pad); ctx.lineTo(W - pad - arm, H - pad);
+  ctx.moveTo(pad + arm, H - pad); ctx.lineTo(pad, H - pad); ctx.lineTo(pad, H - pad - arm);
+  ctx.stroke();
+}
+
+function drawHorizon() {
+  const cx = W / 2, cy = H / 2;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(cx - W * 0.22, cy - H * 0.26, W * 0.44, H * 0.52);
+  ctx.clip();
+  ctx.translate(cx, cy);
+  ctx.rotate(-T.rollDeg * Math.PI / 180);
+  ctx.translate(0, T.pitchDeg * pxPerDeg);
+
+  const span = W * 0.30;
+  line(-span, 0, -span * 0.18, 0, P.ladder, 1.8);
+  line(span * 0.18, 0, span, 0, P.ladder, 1.8);
+
+  for (let deg = -60; deg <= 60; deg += 10) {
+    if (deg === 0) continue;
+    const y = -deg * pxPerDeg;
+    const major = deg % 20 === 0;
+    const half = major ? span * 0.30 : span * 0.15;
+    line(-half, y, half, y, P.ladder, 1.8);
+    if (major) {
+      const label = String(Math.abs(deg));
+      text(label, half + 10, y + 6, { color: P.grey, size: 13 });
+      text(label, -half - 10, y + 6, { color: P.grey, size: 13, align: 'right' });
+    }
+  }
+  ctx.restore();
+}
+
+function drawReticle() {
+  const cx = W / 2, cy = H / 2, gap = W * 0.018, arm = W * 0.055;
+  line(cx - gap - arm, cy, cx - gap, cy, P.neon, 2.5);
+  line(cx + gap, cy, cx + gap + arm, cy, P.neon, 2.5);
+  line(cx, cy - gap, cx, cy + gap, P.neon, 2.5);
+  ctx.fillStyle = P.neon; ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawHeadingTape() {
+  const cx = W / 2, top = H * 0.055, tapeW = W * 0.30, pxPer = tapeW / 60;
+  box(cx - tapeW / 2, top - 6, tapeW, 58, P.panel);
+  line(cx - tapeW / 2, top + 52, cx + tapeW / 2, top + 52, P.neonDim, 1.5);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(cx - tapeW / 2, top - 6, tapeW, 58); ctx.clip();
+  for (let d = T.headingDeg - 30; d <= T.headingDeg + 30; d += 1) {
+    const norm = ((d % 360) + 360) % 360;
+    if (norm % 10 > 0.001 && norm % 10 < 9.999) continue;
+    const x = cx + (d - T.headingDeg) * pxPer;
+    const major = Math.round(norm) % 30 === 0;
+    line(x, top + 52, x, top + 52 - (major ? 16 : 9), P.neon, major ? 2.5 : 1.5);
+    if (major) text(Fmt.heading(norm), x, top + 24, { align: 'center' });
+  }
+  ctx.restore();
+
+  line(cx, top + 52, cx, top + 62, P.neon, 2.5);
+  text(Fmt.heading(T.headingDeg) + ' ' + Fmt.cardinal(T.headingDeg), cx, top + 88,
+       { color: P.white, size: 22, align: 'center', bold: true });
+}
+
+function drawVerticalTape(x, cy, value, name, unit, step, rightSide) {
+  const pxPer = H / 60, boxW = W * 0.085, boxH = 56, tick = rightSide ? -18 : 18;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x - boxW, cy - H * 0.20, boxW * 2, H * 0.40); ctx.clip();
+  let v = Math.floor((value - 20) / step) * step;
+  for (; v <= value + 20; v += step) {
+    const y = cy + (value - v) * pxPer;
+    line(x, y, x + tick, y, P.neonDim, 1.5);
+    text(String(Math.round(v)), rightSide ? x + tick + 8 : x - tick - 8, y + 5,
+         { size: 14, align: rightSide ? 'left' : 'right' });
+  }
+  ctx.restore();
+
+  box(x - boxW / 2, cy - boxH / 2, boxW, boxH, P.panel, P.neon, 2);
+  const shown = isFinite(value) ? Math.round(value).toString() : '--';
+  text(shown, x, cy + 8, { color: P.white, size: 20, align: 'center', bold: true });
+  text(name + ' ' + unit, x, rightSide ? cy - boxH / 2 - 10 : cy + boxH / 2 + 20,
+       { color: P.grey, size: 12, align: 'center' });
+}
+
+function drawSpeedTape() { drawVerticalTape(W * 0.13, H / 2, T.groundSpeedMs, 'GS', 'M/S', 5, false); }
+function drawAltitudeTape() {
+  const x = W * 0.87, cy = H / 2;
+  drawVerticalTape(x, cy, T.altitudeM, 'ALT', 'M', 5, true);
+
+  const maxVs = 6, barH = H * 0.22, bx = x + W * 0.045;
+  const frac = Math.max(-1, Math.min(1, T.verticalSpeedMs / maxVs));
+  line(bx, cy - barH / 2, bx, cy + barH / 2, P.neonDim, 1.5);
+  ctx.fillStyle = T.verticalSpeedMs >= 0 ? P.green : P.amber;
+  if (T.verticalSpeedMs >= 0) ctx.fillRect(bx - 4, cy - barH / 2 * frac, 8, barH / 2 * frac);
+  else ctx.fillRect(bx - 4, cy, 8, barH / 2 * -frac);
+
+  ctx.save();
+  ctx.translate(bx + 20, cy); ctx.rotate(Math.PI / 2);
+  text('VS ' + Fmt.num(T.verticalSpeedMs, 1) + ' M/S', 0, 0, { color: P.grey, size: 12, align: 'center' });
+  ctx.restore();
+}
+
+function drawFooter() {
+  const y = H - 22, left = 26, bw = W * 0.09, bh = 18, by = y - bh;
+  const pct = T.batteryPercent;
+  box(left, by, bw, bh, null, P.neonDim, 1.5);
+  if (pct >= 0) {
+    ctx.fillStyle = pct <= 15 ? P.red : (pct <= 30 ? P.amber : P.green);
+    ctx.fillRect(left + 2, by + 2, (bw - 4) * (pct / 100), bh - 4);
+  }
+  text(Fmt.battery(pct) + '  ' + Fmt.num(T.batteryVolts, 2) + 'V  ' + Fmt.num(T.batteryTempC, 0) + 'C',
+       left + bw + 14, y, { size: 14 });
+  text(T.flightMode + '   T+' + Fmt.mmss(T.flightTimeSec) + '   GIM ' + Fmt.num(T.gimbalPitchDeg, 0),
+       W / 2, y, { size: 14, align: 'center' });
+  text('SAT ' + T.satellites + '   ' + Fmt.num(T.latitude, 5) + ' ' + Fmt.num(T.longitude, 5),
+       W - left, y, { size: 14, align: 'right' });
+  text('DIST ' + Fmt.dist(T.distanceFromHomeM) + Fmt.distUnit(T.distanceFromHomeM) +
+       '   H ' + Fmt.dist(T.altitudeM) + ' M   RC ' + T.rcModeSwitch,
+       W / 2, y - 26, { color: P.grey, size: 12, align: 'center' });
+}
+
+function drawWarning() {
+  if (!T.warning) return;
+  if (Math.floor(Date.now() / 400) % 2 !== 0) return;
+  const cx = W / 2, top = H * 0.24;
+  ctx.font = 'bold 18px ' + MONO;
+  const tw = ctx.measureText(T.warning).width + 40;
+  box(cx - tw / 2, top - 30, tw, 44, P.panel, P.red, 3);
+  text(T.warning, cx, top + 2, { color: P.red, size: 18, align: 'center', bold: true });
+}
+
+function drawSimBadge() {
+  const label = 'SIM FEED';
+  ctx.font = 'bold 16px ' + MONO;
+  const tw = ctx.measureText(label).width + 30;
+  box(24, 24, tw, 44, P.panel, P.amber, 3);
+  text(label, 24 + tw / 2, 52, { color: P.amber, size: 16, align: 'center', bold: true });
+
+  ctx.save();
+  ctx.translate(W / 2, H / 2); ctx.rotate(-18 * Math.PI / 180);
+  text('SIMULATION', 0, H * 0.05, { color: 'rgba(255,179,0,0.13)', size: H * 0.16, align: 'center', bold: true });
+  ctx.restore();
+}
+
+function drawRecBadge() {
+  if (Math.floor(Date.now() / 500) % 2 !== 0) return;
+  ctx.fillStyle = P.red;
+  ctx.beginPath(); ctx.arc(W - 60, 54, 8, 0, Math.PI * 2); ctx.fill();
+  text('REC', W - 78, 60, { color: P.red, size: 14, align: 'right' });
+}
+
+function drawScanlines() {
+  ctx.fillStyle = 'rgba(0,229,255,0.035)';
+  for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+}
+
+function drawHud() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  drawScanlines();
+  drawCorners();
+  drawHorizon();
+  drawReticle();
+  drawHeadingTape();
+  drawSpeedTape();
+  drawAltitudeTape();
+  drawFooter();
+  drawWarning();
+  drawSimBadge();
+  if (T.recording) drawRecBadge();
+}
+
+/* ---------- joysticks, mirror ui/widget/CyberJoystick.kt ---------- */
+const stick = { pitch: 0, roll: 0, yaw: 0, throttle: 0 };
+
+function makeStick(canvas, label, onMove) {
+  const c = canvas.getContext('2d');
+  let size = 0, padX = 0, padY = 0, padR = 0, knobR = 0, knobX = 0, knobY = 0, pointerId = null, anim = null;
+
+  function layout() {
+    const d = window.devicePixelRatio || 1;
+    size = canvas.clientWidth;
+    canvas.width = size * d; canvas.height = size * d;
+    c.setTransform(d, 0, 0, d, 0, 0);
+    padX = size / 2; padY = size / 2;
+    padR = size * 0.44; knobR = padR * 0.34;
+    if (knobX === 0) { knobX = padX; knobY = padY; }
+  }
+
+  function paint() {
+    c.clearRect(0, 0, size, size);
+    c.fillStyle = P.panel; c.beginPath(); c.arc(padX, padY, padR, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = P.neon; c.lineWidth = 2; c.beginPath(); c.arc(padX, padY, padR, 0, Math.PI * 2); c.stroke();
+    c.strokeStyle = P.neonDim; c.lineWidth = 1.5;
+    c.beginPath(); c.arc(padX, padY, padR * 0.62, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.arc(padX, padY, padR * 0.30, 0, Math.PI * 2); c.stroke();
+    c.beginPath();
+    c.moveTo(padX - padR, padY); c.lineTo(padX + padR, padY);
+    c.moveTo(padX, padY - padR); c.lineTo(padX, padY + padR); c.stroke();
+    for (let i = 0; i < 12; i++) {
+      const a = i * 30 * Math.PI / 180, inner = padR * 0.90;
+      c.beginPath();
+      c.moveTo(padX + inner * Math.cos(a), padY + inner * Math.sin(a));
+      c.lineTo(padX + padR * Math.cos(a), padY + padR * Math.sin(a));
+      c.stroke();
+    }
+    c.save();
+    c.shadowColor = P.neon; c.shadowBlur = 18;
+    c.fillStyle = P.neon; c.beginPath(); c.arc(knobX, knobY, knobR, 0, Math.PI * 2); c.fill();
+    c.restore();
+    c.fillStyle = P.black; c.beginPath(); c.arc(knobX, knobY, knobR * 0.42, 0, Math.PI * 2); c.fill();
+    text(label, padX, padY + padR + 20, { color: P.grey, size: 11, align: 'center' });
+  }
+
+  function moveTo(x, y) {
+    let dx = x - padX, dy = y - padY;
+    const len = Math.hypot(dx, dy), limit = padR - knobR * 0.4;
+    if (limit <= 0) return;
+    if (len > limit) { dx = dx / len * limit; dy = dy / len * limit; }
+    knobX = padX + dx; knobY = padY + dy;
+    paint();
+    onMove(dx / limit, -dy / limit);
+  }
+  function release() {
+    const fx = knobX, fy = knobY, t0 = performance.now();
+    if (anim) cancelAnimationFrame(anim);
+    (function step(now) {
+      const k = Math.min(1, (now - t0) / 120);
+      knobX = fx + (padX - fx) * k; knobY = fy + (padY - fy) * k;
+      paint();
+      onMove((knobX - padX) / padR, -(knobY - padY) / padR);
+      if (k < 1) anim = requestAnimationFrame(step);
+    })(t0);
+  }
+
+  canvas.addEventListener('pointerdown', e => {
+    if (anim) cancelAnimationFrame(anim);
+    pointerId = e.pointerId; canvas.setPointerCapture(pointerId);
+    const r = canvas.getBoundingClientRect();
+    moveTo(e.clientX - r.left, e.clientY - r.top);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerId !== pointerId) return;
+    const r = canvas.getBoundingClientRect();
+    moveTo(e.clientX - r.left, e.clientY - r.top);
+  });
+  const up = e => { if (e.pointerId === pointerId) { pointerId = null; release(); } };
+  canvas.addEventListener('pointerup', up);
+  canvas.addEventListener('pointercancel', up);
+
+  layout(); paint();
+  window.addEventListener('resize', () => { layout(); paint(); });
+}
+
+/* left = throttle + yaw, right = pitch + roll (mode 2) */
+makeStick(document.getElementById('stickL'), 'THR / YAW', (x, y) => { stick.yaw = x; stick.throttle = y; });
+makeStick(document.getElementById('stickR'), 'PITCH / ROLL', (x, y) => { stick.roll = x; stick.pitch = y; });
+
+/* ---------- backend, mirrors src/sim SimBackend.kt ---------- */
+let stickEngaged = false;
+function refuse(what) { Log.err('SIM BUILD: ' + what + ' refused — no DJI SDK in this preview'); }
+
+function bind(id, fn) { document.getElementById(id).addEventListener('click', fn); }
+bind('btnStick', () => {
+  stickEngaged = !stickEngaged;
+  document.getElementById('btnStick').textContent = stickEngaged ? 'STICK ON' : 'STICK';
+  if (stickEngaged) Log.ok('virtual stick ENGAGED — preview only, nothing is transmitted');
+  else { stick.pitch = stick.roll = stick.yaw = stick.throttle = 0; Log.info('virtual stick released'); }
+});
+bind('btnTakeoff', () => refuse('takeoff'));
+bind('btnHover', () => { stick.pitch = stick.roll = stick.yaw = stick.throttle = 0; Log.warn('sticks neutralised'); });
+bind('btnLand', () => refuse('land'));
+bind('btnConfirm', () => refuse('confirm landing'));
+bind('btnCancel', () => refuse('abort landing'));
+bind('btnRth', () => refuse('return to home'));
+bind('btnPhoto', () => refuse('capture'));
+bind('btnRecord', () => refuse('record'));
+bind('btnGimUp', () => refuse('gimbal jog'));
+bind('btnGimDn', () => refuse('gimbal jog'));
+bind('btnGimStop', () => refuse('gimbal jog'));
+bind('btnHorizon', () => refuse('gimbal angle'));
+bind('btnDown45', () => refuse('gimbal angle'));
+bind('btnConsole', () => document.getElementById('console').classList.toggle('on'));
+bind('btnLimits', () => {
+  Log.info('flight limits — not settable in the browser preview');
+  Log.info('in the app: RTH 40/60 m, max height 60/120 m, max radius 100/300 m');
+  document.getElementById('console').classList.add('on');
+});
+
+/* ---------- chip + loop ---------- */
+const chip = document.getElementById('chipLink');
+function drawChip() {
+  const state = T.demo ? 'SIM' : (T.linked ? (T.virtualStickOn ? 'STICK' : (T.isFlying ? 'AIR' : 'GROUND')) : 'NO LINK');
+  chip.textContent = state + '  ' + T.aircraftModel + '  BAT ' + Fmt.battery(T.batteryPercent) + '  SAT ' + T.satellites;
+  chip.style.color = T.demo ? P.amber : (T.linked ? P.green : P.red);
+}
+
+resize();
+Log.info('GHOSTGRID browser preview up — synthetic telemetry');
+Log.warn('this is not the Android app: no DJI SDK, no aircraft commands');
+setInterval(() => { stepTelemetry(); drawChip(); }, 100);
+(function frame() { drawHud(); requestAnimationFrame(frame); })();
+</script>
+</body>
+</html>

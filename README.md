@@ -1,154 +1,235 @@
-# [MSDK V5 Released](https://github.com/dji-sdk/Mobile-SDK-Android-V5)
+# GHOSTGRID — DJI drone control interface
 
-MSDK V5 Supported Product:
-* [DJI Mavic 3 Enterprise Series](https://www.dji.com/cn/mavic-3-enterprise)
-* [M30 Series](https://www.dji.com/matrice-30?site=brandsite&from=nav)
-* [M300 RTK](https://www.dji.com/matrice-300?site=brandsite&from=nav)
+A cybersecurity-styled tactical control app for DJI aircraft, built on **DJI
+Mobile SDK V4 (4.18)**. Fly from the phone screen or from the physical
+controller; the phone is the head-up glass either way.
 
-# DJI Mobile SDK V4 for Android Latest Version 4.18
+---
 
-## What Is This?
+## ⬇ Download the app
 
-The DJI Mobile SDK enables you to automate your DJI Product. You can control flight, and many subsystems of the product including the camera and gimbal. Using the Mobile SDK, create a customized mobile app to unlock the full potential of your DJI aerial platform.
+**[Go to the Releases page →](https://github.com/thabofromrichfield/dronesystem/releases/tag/latest-build)**
 
-## Integration
+Grab `app-full-debug.apk`. Copy it to your phone, tap it, allow "install from
+unknown sources", done. No Android Studio, no Gradle, no terminal.
 
-Declare dependency via Maven:
+> **The full APK only appears there once your DJI App Key is in place.**
+> See [Put your App Key in — 3 clicks](#put-your-app-key-in--3-clicks) below.
+> Until then the release only has `app-sim-debug.apk`, which is the interface
+> with no aircraft connection.
 
-~~~xml
-<dependency>
-    <groupId>com.dji</groupId>
-    <artifactId>dji-sdk</artifactId>
-    <version>4.18</version>
-</dependency>
+---
 
-<dependency>
-    <groupId>com.dji</groupId>
-    <artifactId>dji-sdk-provided</artifactId>
-    <version>4.18</version>
-</dependency>
-~~~
+## Put your App Key in — 3 clicks
 
-or Gradle:
+Your key never goes in a file, and you never paste it to me. It goes in GitHub,
+and the build picks it up automatically:
 
-~~~groovy
-compile 'com.dji:dji-sdk:4.18'
-provided 'com.dji:dji-sdk-provided:4.18'
-~~~
+1. On the repo page: **Settings** → **Secrets and variables** → **Actions**
+   ([direct link](https://github.com/thabofromrichfield/dronesystem/settings/secrets/actions))
+2. **New repository secret**
+3. Name `DJI_API_KEY` — exactly that. Value: paste your App Key. **Add secret.**
 
-For further detail on how to integrate the DJI Android SDK into your Android Studio project, please check the [Integrate SDK into Application](http://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-integrate.html#import-maven-dependency) tutorial.
+Then come back here and push any change, or open **Actions** → newest run →
+**Re-run all jobs**. A few minutes later the real APK is on the
+[Releases page](https://github.com/thabofromrichfield/dronesystem/releases/tag/latest-build).
 
-## Running the SDK Sample Code
+Your key must be registered against package `drone.test` at
+[developer.dji.com](https://developer.dji.com/user/apps). If it is registered
+against a different package name, the app installs but the aircraft will never
+connect.
 
-Developers can [run the sample application](https://developer.dji.com/mobile-sdk/documentation/quick-start/index.html#android-sample-app) to immediately run code and see how the DJI Mobile SDK can be used.
+---
 
-One of DJI's aircraft or handheld cameras will be required to run the sample application.
+## Is your drone supported?
 
-## Development Workflow 
+Look for it here. These are the 40 aircraft DJI Mobile SDK 4.18 knows about:
 
-From registering as a developer, to deploying an application, the following will take you through the full Mobile SDK Application development process:
+**Mavic** — Pro · Air · Air 2 · Mini · 2 · 2 Pro · 2 Zoom · 2 Enterprise / Dual / Advanced
+**DJI** — Mini 2 · Mini SE · Air 2S
+**Phantom** — 3 Standard / Advanced / Professional / 4K · 4 · 4 Advanced · 4 Pro · 4 Pro V2 · 4 Multispectral
+**Inspire** — 1 · 1 Pro · 1 RAW · 2
+**Matrice** — 100 · 200 / V2 · 210 / V2 · 210 RTK / V2 · 300 RTK · 600 · 600 Pro
+**Other** — Spark · A3 · N3
 
-- [Prerequisites](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-prerequisits.html)
-- [Register as DJI Developer & Download SDK](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-register.html)
-- [Integrate SDK into Application](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-integrate.html)
-- [Run Application](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-run.html)
-- [Testing, Profiling & Debugging](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-testing.html)
-- [Deploy](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-deploy.html)
+**Not supported:** Mini 3 / 4 / 4K, Air 3 / 3S, Mavic 3 family, Avata, FPV,
+Neo, Flip. Those need Mobile SDK v5 — a different SDK entirely.
 
-## Sample Projects & Tutorials
+Not on the list but not sure? Just install it. The app's first screen prints
+your aircraft's own model name. If it shows up, it works.
 
-Several Android tutorials are provided as examples on how to use different features of the Mobile SDK and debug tools includes:
+---
 
-- [Application Activation and Aircraft Binding](http://developer.dji.com/mobile-sdk/documentation/android-tutorials/ActivationAndBinding.html)
-- [Getting Started with UX SDK](http://developer.dji.com/mobile-sdk/documentation/android-tutorials/UXSDKDemo.html)
-- [Camera Application](https://developer.dji.com/mobile-sdk/documentation/android-tutorials/FPVDemo.html)
-- [MapView and Waypoint Application (GaodeMap)](https://developer.dji.com/mobile-sdk/documentation/android-tutorials/GSDemo-Gaode-Map.html)
-- [MapView and Waypoint Application (GoogleMap)](https://developer.dji.com/mobile-sdk/documentation/android-tutorials/GSDemo-Google-Map.html)
-- [TapFly and ActiveTrack Application](https://developer.dji.com/mobile-sdk/documentation/android-tutorials/P4MissionsDemo.html)
-- [Simulator Application](http://developer.dji.com/mobile-sdk/documentation/android-tutorials/SimulatorDemo.html)
-- [GEO System Application](http://developer.dji.com/mobile-sdk/documentation/android-tutorials/GEODemo.html)
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ▌LINK AIR  MATRICE 300 RTK  BAT 87%  SAT 16▐        [LIMITS] │
+│                    2 8 5   N                                │
+│                   ╔═════╗                                     │
+│      GS   ┌───┐   ║ 285 ║   ┌───┐   ALT                      │
+│      M/S  │ 12│   ╚═════╝   │ 63│   M                        │
+│           └───┘      ┼      └───┘                             │
+│           ───────╲   │   ╱───────                             │
+│                   ╲  ┼  ╱                                    │
+│      ┌───────────────┴──────────────┐                        │
+│      │  GPS   T+04:12   GIM -32     │                        │
+│      └──────────────────────────────┘                        │
+│   ( THR/YAW )    [STICK][TAKEOFF][HOVER][LAND][RTH]  ( PITCH/ROLL )
+└──────────────────────────────────────────────────────────────┘
+```
 
-## Learn More about DJI Products and the Mobile SDK
+## What it does
 
-Please visit [DJI Mobile SDK Documentation](https://developer.dji.com/mobile-sdk/documentation/introduction/index.html) for more details.
+| System | Detail |
+| --- | --- |
+| Live FPV | Primary camera feed decoded through `DJICodecManager` onto a `SurfaceView` |
+| Head-up glass | Artificial horizon with pitch ladder, heading tape, speed and altitude tapes, vertical-speed bar, reticle |
+| Virtual stick | Mode 2 (American hand 2). Two touch sticks, 10 Hz command stream, auto-recentre on release |
+| Flight commands | Takeoff, hover, land, confirm land, abort land, return to home — each behind a confirmation dialog |
+| Gimbal | Speed jog up/down, stop, absolute 0° and −45° |
+| Camera | Single capture, record toggle |
+| Telemetry | Altitude, ground speed, vertical speed, distance from home, lat/lon, heading, pitch/roll, gimbal pitch, satellites, battery % / V / °C, flight timer, flight mode, RC switch |
+| Warnings | Failsafe armed, battery low/serious, home point not set, GPS weak, above 400 m |
+| Mission console | Timestamped log of every command sent and every SDK result |
+| Flight limits | RTH altitude 40/60 m, max height 60/120 m, max radius 100/300 m |
+| Simulator | Starts the DJI onboard simulator at your current position so you can rehearse with props still |
+| SIM feed | Synthetic telemetry that renders the whole HUD with no aircraft attached. Cannot send commands |
 
-## DJI Mobile UX SDK
+## Supported aircraft
 
-DJI Mobile UX SDK is a suite of product agnostic UI objects that fast tracks the development of iOS applications using the DJI Mobile SDK. For more details, please check [here](https://github.com/dji-sdk/Mobile-UXSDK-Android).
+Exactly the 40 members of `DJIAircraft.ModelName` in DJI Mobile SDK V4 4.18,
+extracted from the bundled reference — not from memory, and not a guess:
 
-## Device Health Information Json File
+| Family | Models |
+| --- | --- |
+| Mavic | Pro, Air, Air 2, Mini, 2, 2 Pro, 2 Zoom, 2 Enterprise, 2 Enterprise Dual, 2 Enterprise Advanced |
+| DJI-branded | **Mini 2**, **Mini SE**, **Air 2S** |
+| Phantom | 3 Standard / Advanced / Professional / 4K, 4, 4 Advanced, 4 Pro, 4 Pro V2, 4 Multispectral |
+| Inspire | 1, 1 Pro, 1 RAW, 2 |
+| Matrice | 100, 200 / V2, 210 / V2, 210 RTK / V2, 300 RTK, 600, 600 Pro |
+| Other | Spark, A3, N3 |
 
-You can find the **hms.json** and **`hms_match_sdkerror.json`** files in this repo's root folder.
+Re-derive it yourself:
 
-It contains error code and detailed description for device components. Only supported by some components of Matrice 300 RTK and Zenmuse H20 series.
+```bash
+grep -o 'DJIAircraft_DJIAircraftModelName[A-Za-z0-9]*_inline' \
+  "dji-reference/docs/API Reference/javascripts/search_index.js" | sort -u
+```
 
-It is recommended to use device health information to replace old diagnostics for flight controller and RTK. There will be a few duplicated component error for gimbal, battery, perception module on Matrice 300 RTK.
+**Not supported:** Mini 3 / 4 / 4K, Air 3 / 3S, Mavic 3 family, Avata, FPV,
+Neo, Flip. None has an enum member, and none appears anywhere in the 4.18
+reference. Those need Mobile SDK **v5** — a different SDK with a different API,
+so this project would not build against it unchanged.
 
-Please refer to the table below for duplicated error:
+**The list is not the test, though.** The app reports your aircraft's actual
+model name on the boot screen; see [FIRST-FLIGHT.md](FIRST-FLIGHT.md).
 
-| DJIDiagnosticsError | Enum Value | AlarmId |
-|:------------- |:---------------:| -------------:|
-| `BATTERY_DISCHARGE_OVER_CURRENT`  | 3001 | 0x110B0001|
-| `BATTERY_DISCHARGE_OVER_HEAT` | 3002  | 0x110B0002 |
-| `BATTERY_LOW_TEMPERATURE` | 3003  | 0x110B0003 |
-| `BATTERY_CELL_BROKEN` | 3004 | 0x110B0006 |
-| `GIMBAL_CONNECT_TO_FC_ERROR` | 2005 | 0x1D030001 |
-| `GIMBAL_GYROSCOPE_ERROR` | 2001 | 0x1D040002 |
-| `GIMBAL_PITCH_ERROR` | 2002 | 0x1D040004 |
-| `GIMBAL_ROLL_ERROR` | 2003 | 0x1D040003 |
-| `GIMBAL_YAW_ERROR` | 2004 | 0x1D040005 |
+## Two build flavours
 
+| | `full` | `sim` |
+| --- | --- | --- |
+| DJI Mobile SDK 4.18 | linked | **not linked at all** |
+| What it does | flies a real aircraft | renders the interface on synthetic data |
+| ABI | `armeabi-v7a`, `arm64-v8a` | `x86_64`, `x86` |
+| Runs on an emulator | no | **yes, unemulated** |
+| Application ID | `drone.test` | `drone.test.sim` |
+| Build | `./gradlew assembleFullDebug` | `./gradlew installSimDebug` |
 
-## ProGuard
+The split is a source-set boundary, not a runtime flag. `src/main` holds the
+interface and is DJI-free by construction; `src/full` holds every class that
+imports `dji.*`; `src/sim` supplies a stub backend with no SDK on the classpath.
+Nothing in `ui/` imports `dji.*`, and a check in the build notes enforces it.
 
-If you're planning on optimizing your app with [ProGuard](https://developer.android.com/studio/build/shrink-code.html), you can add the following rules to your app's `proguard.cfg` file:
+## Running it
 
-- For **AAR** file, please use the following rule:
+| Where | Command | What you get |
+| --- | --- | --- |
+| Browser, no toolchain | `python3 -m http.server 8080 --directory preview` | visual preview of the whole interface |
+| Android emulator | `./gradlew installSimDebug` | the real app, synthetic telemetry, x86_64 |
+| Physical phone + aircraft | `./gradlew assembleFullDebug` | the real app, real flight |
 
-~~~
-"-libraryjars ./PATH_TO_THIS_FILE/dji_android_sdk.aar"
-~~~
+**The real app is the `full` build.** `assembleFullDebug` produces an APK that
+registers with DJI, decodes the live camera feed and flies the aircraft. It needs
+a physical phone and a DJI App Key registered against package `drone.test`.
+Step-by-step from repo to first flight: [FIRST-FLIGHT.md](FIRST-FLIGHT.md).
 
-- For **API Library** folder, please use the rules in [proguard-project](<https://github.com/dji-sdk/Mobile-SDK-Android/blob/master/Sample Code/app/proguard-rules.pro>) file. 
+The `sim` build and `preview/index.html` exist so the interface can be developed
+without hardware. Neither can command an aircraft. VS Code and emulator setup in
+[VSCODE.md](VSCODE.md); Android Studio path in [SETUP.md](SETUP.md).
 
-> **Note**: There are two types of DJI Android SDK: **AAR** and **API Library folder**, you can download them from DJI Developer Website: <http://developer.dji.com/mobile-sdk/downloads/>.
+## Getting an APK without installing the toolchain
 
-## SDK Keys
+[`.github/workflows/android.yml`](.github/workflows/android.yml) builds both
+flavours on every push. No local JDK, Android SDK or Gradle needed.
 
-SDK Keys can be used as an alternative interface to access the product.
+Push, then open **Actions** → the newest run → **Artifacts** at the bottom.
 
-A detailed introduction for SDK Keys is [here](./docs/README-KeyedInterface.md).
+| Artifact | Size | Use |
+| --- | --- | --- |
+| `ghostgrid-sim-debug` | ~3 MB | emulator, interface only |
+| `ghostgrid-full-debug-NO-APP-KEY` | ~73 MB | installs and launches, **will not connect** |
 
-## Missions Refactor
+That 70 MB difference is DJI's ARM native libraries. The full APK is named the
+way it is because it is built with the placeholder key: it registers with DJI,
+gets rejected, and never reaches an aircraft.
 
-Missions are an important part of the SDK as they allow developers to automate DJI's products using a simple, high level interface. In 4.0, missions are being refactored to be more robust and easier to manage.
+**To get a full APK that actually flies**, add your key as a repository secret:
 
-A detailed introduction for missions is [here](./docs/README-Mission.md).
+1. Settings → Secrets and variables → Actions → **New repository secret**
+2. Name it exactly `DJI_API_KEY`, value = your App Key
+3. Push anything, or re-run the workflow
 
-## Android Bridge App
+The `full` job then builds `ghostgrid-full-debug` with the key baked in. The key
+is injected at build time and is never committed. Your App Key must be
+registered against package `drone.test` — see [FIRST-FLIGHT.md](FIRST-FLIGHT.md).
 
-Please check this [link](https://github.com/dji-sdk/Android-Bridge-App) to download the apk of the Android Bridge App apk file.
+Until the secret exists, the `full` job skips and says so, and the
+`full_compile_check` job still compiles `src/full` against dji-sdk 4.18 so the
+flight code is never left uncompiled.
 
-## SDK API Reference
+## Repository layout
 
-[**Android SDK API Documentation**](http://developer.dji.com/api-reference/android-api/index.html)
+Two halves, deliberately separate:
+
+- **`app/`** — GHOSTGRID. My code. Package `drone.test`.
+- **`dji-reference/`** — DJI's unmodified sample app and API docs. Read-only, **not compiled**.
+
+Full tree in [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md).
+Import and run instructions in [SETUP.md](SETUP.md).
+
+## Safety
+
+These are real aircraft controls, so the risky paths are deliberate:
+
+1. Every command that moves the aircraft goes through a confirmation dialog.
+2. Leaving the screen while airborne asks first, and says the aircraft keeps flying.
+3. Leaving the screen disengages virtual stick before tearing down the stream, so
+   authority returns to the physical controller instead of leaving DJI waiting on
+   an input that is no longer coming.
+4. Virtual stick streams at 10 Hz; if the stream stops, the aircraft's own
+   failsafe takes over.
+5. Speed ceilings live in `VirtualStickController.kt` (in `src/full`): 6 m/s horizontal,
+   3 m/s vertical, 60 °/s yaw.
+
+## Before the first real flight
+
+`app/src/full/java/drone/test/core/VirtualStickController.kt` has one constant that must be checked on the
+ground: `SWAP_PITCH_ROLL`.
+
+DJI 4.18's `FlightControlData(pitch, roll, yaw, verticalThrottle)` has its first
+two arguments swapped relative to their names — DJI's own sample says so in a
+code comment. The flag defaults to `true` to match that sample.
+
+**Hover at 2 m and push the right stick forward.** If the aircraft rolls sideways
+instead of pitching forward, set the flag to `false`.
+
+## Requirements
+
+- Android 6.0 (API 23) or newer, `armeabi-v7a` or `arm64-v8a`. No x86 emulator.
+- A DJI aircraft supported by Mobile SDK V4 4.18 and its remote controller.
+- A DJI developer App Key registered against package `drone.test`.
+- Internet on first launch — the App Key is validated against DJI's servers.
 
 ## License
 
-The DJI Android SDK is dynamically linked with unmodified libraries of <a href=http://ffmpeg.org>FFmpeg</a> licensed under the <a href=https://www.gnu.org/licenses/lgpl-2.1.html.en>LGPLv2.1</a>. The source code of these FFmpeg libraries, the compilation instructions, and the LGPL v2.1 license are provided in [Github](https://github.com/dji-sdk/FFmpeg).
-
-The DJI Android SDK is dynamically linked with unmodified libraries of <a href=https://mvnrepository.com/artifact/com.vividsolutions/jts/1.8>JTS Topology Suite</a> licensed under the <a href=https://www.gnu.org/licenses/lgpl-2.1.html.en>LGPLv2.1</a>.
-
-## Support
-
-You can get support from DJI with the following methods:
-
-- Post questions in DJI Developer Forums:
-[**Chinese Forum**](https://djisdksupport.zendesk.com/hc/zh-cn/community/topics)
-, [**English Forum**](https://djisdksupport.zendesk.com/hc/en-us/community/topics)
-
-## Join Us
-
-DJI is looking for all kinds of Software Engineers to continue building the Future of Possible. Available positions in Shenzhen, China and around the world. If you are interested, please send your resume to <software-sz@dji.com>. For more details, and list of all our global offices, please check <https://we.dji.com/jobs_en.html>.
-
-DJI 招软件工程师啦，based在深圳，如果你想和我们一起把DJI产品做得更好，请发送简历到 <software-sz@dji.com>.  或者在这里提交您的简历：https://we.dji.com/zh-CN/position/detail?positionId=1382258951346253824 更多岗位详情请浏览 <https://we.dji.com/zh-CN/social>.
+GHOSTGRID source is MIT. `dji-reference/` and the DJI Mobile SDK remain under
+DJI's own terms.

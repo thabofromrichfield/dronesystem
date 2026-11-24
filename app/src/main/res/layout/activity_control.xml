@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ghost_black">
+
+    <drone.test.ui.widget.FpvSurface
+        android:id="@+id/fpv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <drone.test.ui.widget.HudOverlay
+        android:id="@+id/hud"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- link status chip -->
+    <TextView
+        android:id="@+id/chip_link"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="8dp"
+        android:background="@drawable/panel_cyber"
+        android:padding="6dp"
+        android:text="LINK --"
+        android:textColor="@color/ghost_neon"
+        android:textSize="10sp"
+        android:typeface="monospace" />
+
+    <!-- top right utilities -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="8dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_limits"
+            style="@style/Ghost.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="@string/btn_limits" />
+
+        <Button
+            android:id="@+id/btn_console"
+            style="@style/Ghost.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
+            android:text="@string/btn_console" />
+    </LinearLayout>
+
+    <!-- command rail -->
+    <HorizontalScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="10dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_stick"
+                style="@style/Ghost.Button.Safe"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:minWidth="72dp"
+                android:text="@string/btn_stick" />
+
+            <Button
+                android:id="@+id/btn_takeoff"
+                style="@style/Ghost.Button.Safe"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="72dp"
+                android:text="@string/btn_takeoff" />
+
+            <Button
+                android:id="@+id/btn_hover"
+                style="@style/Ghost.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="66dp"
+                android:text="@string/btn_hover" />
+
+            <Button
+                android:id="@+id/btn_land"
+                style="@style/Ghost.Button.Danger"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="66dp"
+                android:text="@string/btn_land" />
+
+            <Button
+                android:id="@+id/btn_confirm_land"
+                style="@style/Ghost.Button.Danger"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="76dp"
+                android:text="@string/btn_confirm_land" />
+
+            <Button
+                android:id="@+id/btn_cancel_land"
+                style="@style/Ghost.Button.Danger"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="72dp"
+                android:text="@string/btn_cancel_land" />
+
+            <Button
+                android:id="@+id/btn_rth"
+                style="@style/Ghost.Button.Danger"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="60dp"
+                android:text="@string/btn_rth" />
+
+            <Button
+                android:id="@+id/btn_photo"
+                style="@style/Ghost.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="76dp"
+                android:text="@string/btn_photo" />
+
+            <Button
+                android:id="@+id/btn_record"
+                style="@style/Ghost.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="72dp"
+                android:text="@string/btn_record" />
+
+            <Button
+                android:id="@+id/btn_gimbal_up"
+                style="@style/Ghost.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="58dp"
+                android:text="@string/btn_gimbal_up" />
+
+            <Button
+                android:id="@+id/btn_gimbal_down"
+                style="@style/Ghost.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="58dp"
+                android:text="@string/btn_gimbal_down" />
+
+            <Button
+                android:id="@+id/btn_gimbal_stop"
+                style="@style/Ghost.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="56dp"
+                android:text="@string/btn_gimbal_stop" />
+
+            <Button
+                android:id="@+id/btn_gimbal_horizon"
+                style="@style/Ghost.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="78dp"
+                android:text="@string/btn_gimbal_horizon" />
+
+            <Button
+                android:id="@+id/btn_gimbal_down45"
+                style="@style/Ghost.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="78dp"
+                android:text="@string/btn_gimbal_down45" />
+
+            <Button
+                android:id="@+id/btn_sim"
+                style="@style/Ghost.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:minWidth="56dp"
+                android:text="@string/btn_sim" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- joysticks -->
+    <drone.test.ui.widget.CyberJoystick
+        android:id="@+id/stick_left"
+        android:layout_width="124dp"
+        android:layout_height="124dp"
+        android:layout_gravity="bottom|start"
+        android:layout_marginBottom="62dp"
+        android:layout_marginStart="10dp" />
+
+    <drone.test.ui.widget.CyberJoystick
+        android:id="@+id/stick_right"
+        android:layout_width="124dp"
+        android:layout_height="124dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="62dp"
+        android:layout_marginEnd="10dp" />
+
+    <!-- mission console -->
+    <drone.test.ui.widget.ConsoleView
+        android:id="@+id/console"
+        android:layout_width="440dp"
+        android:layout_height="150dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="58dp"
+        android:visibility="gone" />
+</FrameLayout>

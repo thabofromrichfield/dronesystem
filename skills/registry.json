@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "skills": [
+    {"name": "caveman", "path": "caveman/SKILL.md", "source": "JuliusBrussee/caveman", "mode": "default"},
+    {"name": "ultracave", "path": "ultracave/SKILL.md", "source": "JuliusBrussee/caveman", "alias": "/caveman ultra"},
+    {"name": "megacave", "path": "megacave/SKILL.md", "source": "JuliusBrussee/caveman", "alias": "/caveman wenyan"},
+    {"name": "i-have-adhd", "path": "i-have-adhd/SKILL.md", "source": "ayghri/i-have-adhd", "mode": "always-on"},
+    {"name": "caveman-commit", "path": "caveman-commit/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-review", "path": "caveman-review/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "investigate-first", "path": "investigate-first/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "lean-build", "path": "lean-build/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "surgical-patch", "path": "surgical-patch/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "safe-refactor", "path": "safe-refactor/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "migration", "path": "migration/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "verify-and-stop", "path": "verify-and-stop/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "cavecrew", "path": "cavecrew/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-help", "path": "caveman-help/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-stats", "path": "caveman-stats/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-compress", "path": "caveman-compress/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-discover", "path": "caveman-discover/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-learn", "path": "caveman-learn/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-manage", "path": "caveman-manage/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-optimize", "path": "caveman-optimize/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-explore", "path": "caveman-explore/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-evidence-review", "path": "caveman-evidence-review/SKILL.md", "source": "JuliusBrussee/caveman"},
+    {"name": "caveman-setup", "path": "caveman-setup/SKILL.md", "source": "JuliusBrussee/caveman"}
+  ]
+}
