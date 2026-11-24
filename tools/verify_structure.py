@@ -121,6 +121,7 @@ print(f"{len(used)} R.* references resolve")
 # found", which a plain XML parse will not catch.
 themes = open('app/src/main/res/values/themes.xml').read()
 style_names = set(re.findall(r'<style name="([^"]+)"', themes))
+style_bad = False
 for m in re.finditer(r'<style name="([^"]+)"([^>]*)>', themes):
     name, attrs = m.group(1), m.group(2)
     if '.' not in name or 'parent=' in attrs:
@@ -128,7 +129,9 @@ for m in re.finditer(r'<style name="([^"]+)"([^>]*)>', themes):
     implicit = name.rsplit('.', 1)[0]
     if implicit not in style_names:
         bad("style", name, "has no explicit parent and no implicit parent style", implicit)
-print(f"{len(style_names)} styles, implicit parent chain resolves")
+        style_bad = True
+print(f"{len(style_names)} styles" + (", implicit parent chain resolves" if not style_bad
+                                     else ", BROKEN implicit parent chain"))
 
 for f in xmls:
     for k, n in re.findall(r'"@(?:\+)?(id|string|layout|drawable|style|color|xml)/([\w.]+)"', open(f).read()):
@@ -204,6 +207,33 @@ for f in allkt:
     for m in re.finditer(r'currentTimeMillis\(\)[^\n]*%[^\n]*==\s*(\d+)(?!L)', open(f).read()):
         bad("Long == Int comparison on currentTimeMillis:", f, m.group(0)[:80])
 print("Kotlin numeric traps checked (hex width, Long == Int)")
+
+
+# ---- 9c. every DJI import must appear in DJI's own sample -----------------
+# The SDK jar is not available offline, so the only ground truth in the repo is
+# dji-reference/sample-code: code DJI shipped and compiled. Two imports were
+# guessed wrong here and CI caught them:
+#   dji.common.flightcontroller.YawControlMode  -> ...flightcontroller.virtualstick.YawControlMode
+#   dji.sdk.sdkmanager.DJISDKError              -> dji.common.error.DJISDKError
+sample_imports = set()
+for f in glob.glob('dji-reference/sample-code/**/*.java', recursive=True):
+    sample_imports |= set(re.findall(r'^import\s+(dji\.[A-Za-z0-9_.]+);',
+                                     open(f, errors='ignore').read(), re.M))
+assert sample_imports, "dji-reference/sample-code is missing; cannot verify DJI imports"
+n_dji = 0
+n_dji_bad = 0
+for kf in glob.glob('app/src/full/**/*.kt', recursive=True):
+    for imp in re.findall(r'^import (dji\.[A-Za-z0-9_.]+)', open(kf).read(), re.M):
+        n_dji += 1
+        if imp not in sample_imports:
+            bad("DJI import not used anywhere in DJI's sample - package probably wrong:", kf, imp)
+            n_dji_bad += 1
+# Only claim success when it is true; an unconditional success line next to a
+# failure list reads as a pass.
+if n_dji_bad == 0:
+    print(f"all {n_dji} DJI imports in src/full match one of {len(sample_imports)} sample imports")
+else:
+    print(f"{n_dji_bad} of {n_dji} DJI imports could not be confirmed")
 
 print()
 if fail:

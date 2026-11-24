@@ -2,10 +2,10 @@ package drone.test.core
 
 import dji.common.camera.SettingsDefinitions
 import dji.common.error.DJIError
-import dji.common.flightcontroller.FlightCoordinateSystem
-import dji.common.flightcontroller.RollPitchControlMode
-import dji.common.flightcontroller.VerticalControlMode
-import dji.common.flightcontroller.YawControlMode
+import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem
+import dji.common.flightcontroller.virtualstick.RollPitchControlMode
+import dji.common.flightcontroller.virtualstick.VerticalControlMode
+import dji.common.flightcontroller.virtualstick.YawControlMode
 import dji.common.flightcontroller.simulator.InitializationData
 import dji.common.gimbal.Rotation
 import dji.common.gimbal.RotationMode

@@ -5,7 +5,7 @@ import dji.common.error.DJIError
 import dji.sdk.base.BaseProduct
 import dji.sdk.products.Aircraft
 import dji.sdk.products.HandHeld
-import dji.sdk.sdkmanager.DJISDKError
+import dji.common.error.DJISDKError
 import dji.sdk.sdkmanager.DJISDKManager
 import java.util.concurrent.CopyOnWriteArrayList
 

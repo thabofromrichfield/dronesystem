@@ -2,7 +2,7 @@ package drone.test.core
 
 import android.os.Handler
 import android.os.HandlerThread
-import dji.common.flightcontroller.FlightControlData
+import dji.common.flightcontroller.virtualstick.FlightControlData
 
 /**
  * Pushes virtual-stick frames to the aircraft at [HZ]. The aircraft expects a
