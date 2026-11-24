@@ -180,8 +180,10 @@ jobs:
   # stays skipped until a DJI_API_KEY secret exists, so without this job the
   # flight code would never be compiled at all.
   #
-  # It uploads nothing, on purpose: an APK built with the placeholder key would
-  # install and then fail at launch.
+  # It DOES upload what it builds, under an unmistakable name. That APK installs
+  # and launches, but registerApp is rejected and it will never reach an
+  # aircraft - the placeholder key is not a key. Add the DJI_API_KEY secret and
+  # the `full` job produces the real one.
   full_compile_check:
     runs-on: ubuntu-22.04
     needs: verify
@@ -201,7 +203,7 @@ jobs:
           "$SM" "platforms;android-33" "build-tools;30.0.2" "build-tools;33.0.2"
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-      - name: Compile fullDebug against dji-sdk 4.18 (no key, no artifact)
+      - name: Compile fullDebug against dji-sdk 4.18
         shell: bash
         run: |
           set -o pipefail
@@ -226,3 +228,9 @@ jobs:
             n=$((n+1))
             [ "$n" -ge 30 ] && break
           done < fail.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ghostgrid-full-debug-NO-APP-KEY
+          path: app/build/outputs/apk/full/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
