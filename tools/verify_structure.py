@@ -277,6 +277,34 @@ else:
                 name, f"maxSdkVersion={capped[name]} -> permanently DENIED above that API")
 print(f"runtime permission list matches the manifest ({len(capped)} capped permissions checked)")
 
+
+# ---- 9f. DJISDKError members must come from the class page, not a grep ------
+# Grepping the whole docs tree for REGISTRATION_* matched the SDK-APIs-Diff
+# migration pages, which list names that 4.18 renamed (REGISTRATION_APPKEY_NOT_EXIST
+# became APP_KEY_NOT_EXIST). Every one of those compiled as an unresolved
+# reference. The only trustworthy source is the declaration itself:
+#     public static final DJISDKError <NAME> = new DJISDKError(...)
+# spread across DJIError.html and DJIError_DJISDKError.html.
+sdk_err_pages = [
+    'dji-reference/docs/API Reference/Components/SDKError/DJIError.html',
+    'dji-reference/docs/API Reference/Components/SDKError/DJIError_DJISDKError.html',
+]
+sdk_err_members = set()
+for pg in sdk_err_pages:
+    if not os.path.exists(pg):
+        bad("missing DJISDKError reference page:", pg)
+        continue
+    sdk_err_members |= set(re.findall(r'DJISDKError\s+([A-Z][A-Z0-9_]+)\s*=',
+                                      open(pg, errors='ignore').read()))
+assert sdk_err_members, "could not parse DJISDKError members"
+n_err = 0
+for kf in glob.glob('app/src/full/**/*.kt', recursive=True):
+    for name in re.findall(r'DJISDKError\.([A-Z][A-Z0-9_]+)', open(kf).read()):
+        n_err += 1
+        if name not in sdk_err_members:
+            bad("DJISDKError member does not exist in 4.18:", kf, name)
+print(f"all {n_err} DJISDKError references match one of {len(sdk_err_members)} real members")
+
 print()
 if fail:
     print(f"{fail} FAILURE(S)")

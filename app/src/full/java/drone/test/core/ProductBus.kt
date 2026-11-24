@@ -136,24 +136,24 @@ object ProductBus {
      * matches REGISTRATION_SUCCESS.
      */
     private fun hintFor(error: DJIError?): String? = when (error) {
-        DJISDKError.REGISTRATION_INVALID_METADATA ->
+        DJISDKError.INVALID_METADATA ->
             "INVALID_METADATA usually means the App Key itself is malformed - a stray " +
                 "space or newline, or a truncated paste. Re-copy it from " +
                 "developer.dji.com with no surrounding whitespace."
-        DJISDKError.REGISTRATION_BUNDLE_NOT_MATCH ->
+        DJISDKError.BUNDLE_NOT_MATCH ->
             "BUNDLE_NOT_MATCH: this App Key is registered against a different package " +
                 "name. It must be registered for 'drone.test'."
-        DJISDKError.REGISTRATION_APPKEY_NOT_EXIST,
-        DJISDKError.REGISTRATION_INVALID_APPKEY ->
+        DJISDKError.APP_KEY_NOT_EXIST,
+        DJISDKError.INVALID_APP_KEY ->
             "DJI does not recognise this key at all. Check it was copied in full."
-        DJISDKError.REGISTRATION_EMPTY_APPKEY ->
+        DJISDKError.EMPTY_APP_KEY ->
             "The App Key reached the SDK empty."
-        DJISDKError.REGISTRATION_COULD_NOT_CONNECT_TO_INTERNET,
-        DJISDKError.REGISTRATION_HTTP_TIMEOUT ->
+        DJISDKError.COULD_NOT_CONNECT_TO_INTERNET,
+        DJISDKError.HTTP_TIMEOUT ->
             "The phone could not reach DJI's servers. Registration needs internet."
-        DJISDKError.REGISTRATION_MAX_ACTIVATION_COUNT_REACHED ->
+        DJISDKError.MAX_ACTIVATION_COUNT_REACHED ->
             "This key has hit its activation limit on developer.dji.com."
-        DJISDKError.REGISTRATION_APPKEY_LEVEL_NOT_PERMITTED ->
+        DJISDKError.APP_KEY_LEVEL_NOT_PERMITTED ->
             "This key's permission level does not allow the feature requested."
         else -> null
     }
