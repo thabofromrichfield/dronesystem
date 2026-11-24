@@ -38,6 +38,22 @@ controller; the phone is the head-up glass either way.
 | Simulator | Starts the DJI onboard simulator at your current position so you can rehearse with props still |
 | SIM feed | Synthetic telemetry that renders the whole HUD with no aircraft attached. Cannot send commands |
 
+## Supported aircraft
+
+DJI Mobile SDK V4 4.18 talks to these and nothing newer. Taken from the bundled
+API reference, not from memory:
+
+| Family | Models |
+| --- | --- |
+| Mavic | Pro, Air, Air 2, 2 Pro, 2 Zoom, 2 Enterprise / Dual / Advanced, Mini (1) |
+| Phantom | 3 Standard / Advanced / Professional, 4, 4 Advanced, 4 Pro, 4 Pro V2 |
+| Inspire | 1, 1 Pro, 1 Raw, 2 |
+| Matrice | 100, 200 / V2, 210 / V2, 210 RTK / V2, 300 RTK, 600, 600 Pro |
+
+**Not supported:** Mini 2 and later, Air 3, Mavic 3 family, Avata, FPV, Neo.
+Those need Mobile SDK **v5**, which is a different SDK with a different API —
+this project would not build against it unchanged.
+
 ## Two build flavours
 
 | | `full` | `sim` |

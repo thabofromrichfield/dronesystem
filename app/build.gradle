@@ -134,3 +134,21 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9'
 }
+
+// Fail loudly before a 15-minute build if the DJI App Key is still the
+// placeholder. Only guards the full flavour — sim needs no key.
+gradle.taskGraph.whenReady { graph ->
+    def wantsFull = graph.allTasks.any { it.name.toLowerCase().contains('full') }
+    if (!wantsFull) return
+    def res = file('src/main/res/values/strings.xml')
+    if (!res.exists()) return
+    if (res.text.contains('PASTE_YOUR_DJI_APP_KEY_HERE')) {
+        throw new GradleException(
+            "DJI App Key is still the placeholder.\n" +
+            "  Register at https://account.dji.com/register?appId=71#/developer\n" +
+            "  with package name: drone.test\n" +
+            "  then paste it into app/src/main/res/values/strings.xml, line 11.\n" +
+            "  Building the sim flavour instead needs no key: ./gradlew installSimDebug"
+        )
+    }
+}
