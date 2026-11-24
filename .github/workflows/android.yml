@@ -175,12 +175,14 @@ jobs:
   # ---- compile-check the flight code with no App Key ---------------------
   #
   # The full APK needs a real key to register with DJI, but compiling src/full
-  # needs only the SDK on the classpath. This job proves RealBackend, FlightOps,
-  # TelemetrySource, VirtualStickController and the DJI FpvSurface actually
-  # compile against dji-sdk 4.18. It uploads nothing, on purpose: an APK built
-  # with the placeholder key would install and then fail at launch.
+  # needs only the SDK on the classpath. This runs on every push and PR, not
+  # just on manual dispatch: src/full is the actual product, and the `full` job
+  # stays skipped until a DJI_API_KEY secret exists, so without this job the
+  # flight code would never be compiled at all.
+  #
+  # It uploads nothing, on purpose: an APK built with the placeholder key would
+  # install and then fail at launch.
   full_compile_check:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.compile_full_without_key }}
     runs-on: ubuntu-22.04
     needs: verify
     steps:
