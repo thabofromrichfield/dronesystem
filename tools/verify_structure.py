@@ -235,6 +235,27 @@ if n_dji_bad == 0:
 else:
     print(f"{n_dji_bad} of {n_dji} DJI imports could not be confirmed")
 
+
+# ---- 9d. DJI state callbacks declare non-null parameters -------------------
+# DJI's Java callbacks take a non-null argument, so Kotlin rejects a nullable
+# override: "does not implement abstract member onUpdate(p0: SystemState)".
+# Java code may null-check anyway; Kotlin does not need to and must not widen.
+dji_state_cb = ('FlightControllerState', 'BatteryState', 'GimbalState',
+                'SystemState', 'HardwareState')
+n_cb = 0
+for kf in glob.glob('app/src/full/**/*.kt', recursive=True):
+    src = open(kf).read()
+    # Kotlin is onUpdate(name: Type), not onUpdate(Type) - the parameter name
+    # comes first. Matching the type in the name's slot silently matched nothing.
+    for m in re.finditer(r'override fun onUpdate\(\s*\w+\s*:\s*(\w+)(\??)\s*\)', src):
+        typ, nullable = m.group(1), m.group(2)
+        if typ in dji_state_cb:
+            n_cb += 1
+            if nullable:
+                bad("DJI state callback override must be non-null:", kf, typ + nullable)
+if n_cb:
+    print(f"{n_cb} DJI state callback overrides are non-null")
+
 print()
 if fail:
     print(f"{fail} FAILURE(S)")

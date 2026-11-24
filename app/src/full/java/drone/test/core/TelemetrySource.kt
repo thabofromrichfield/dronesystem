@@ -86,8 +86,10 @@ object TelemetrySource {
     }
 
     private val cameraCallback = object : SystemState.Callback {
-        override fun onUpdate(state: SystemState?) {
-            if (state == null) return
+        // Non-null: SystemState.Callback.onUpdate declares a non-null parameter,
+        // so Kotlin will not accept a nullable override. DJI's Java sample
+        // null-checks anyway, which Java permits and Kotlin does not need.
+        override fun onUpdate(state: SystemState) {
             TelemetryStore.mutate {
                 copy(
                     recording = state.isRecording,
