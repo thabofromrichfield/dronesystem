@@ -115,6 +115,21 @@ for k, n in sorted(used):
         bad("unresolved resource", k, n)
 print(f"{len(used)} R.* references resolve")
 
+# ---- 6b. dotted style names must have a resolvable implicit parent ----
+# AAPT2 infers the parent of `A.B.C` as `A.B` unless an explicit parent= is
+# given. A missing link fails processDebugResources with "resource style/X not
+# found", which a plain XML parse will not catch.
+themes = open('app/src/main/res/values/themes.xml').read()
+style_names = set(re.findall(r'<style name="([^"]+)"', themes))
+for m in re.finditer(r'<style name="([^"]+)"([^>]*)>', themes):
+    name, attrs = m.group(1), m.group(2)
+    if '.' not in name or 'parent=' in attrs:
+        continue
+    implicit = name.rsplit('.', 1)[0]
+    if implicit not in style_names:
+        bad("style", name, "has no explicit parent and no implicit parent style", implicit)
+print(f"{len(style_names)} styles, implicit parent chain resolves")
+
 for f in xmls:
     for k, n in re.findall(r'"@(?:\+)?(id|string|layout|drawable|style|color|xml)/([\w.]+)"', open(f).read()):
         if k == 'id' or (k == 'xml' and n == 'accessory_filter'):

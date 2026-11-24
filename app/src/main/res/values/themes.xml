@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Base of the Ghost.* family. Dotted style names inherit implicitly from
+         the part before the last dot, so `Ghost.Mono` requires a style named
+         `Ghost` to exist or AAPT2 fails with "resource style/Ghost not found". -->
+    <style name="Ghost" parent="" />
+
     <style name="GhostTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@color/ghost_black</item>
         <item name="android:colorBackground">@color/ghost_black</item>
