@@ -53,6 +53,7 @@ object ProductBus {
                 val msg = error?.description ?: "unknown"
                 lastError = msg
                 LogBus.err("SDK registration failed: $msg")
+                hintFor(error)?.let { LogBus.err(it) }
                 setLink(Link.KEY_REJECTED)
             }
         }
@@ -127,6 +128,35 @@ object ProductBus {
     }
 
     fun aircraft(): Aircraft? = product?.let { if (it is Aircraft) it else null }
+
+    /**
+     * DJI's registration failures all surface as one generic description on
+     * screen, which leaves the pilot guessing. These are the ones worth
+     * distinguishing, matched on DJI's own error constants the way their sample
+     * matches REGISTRATION_SUCCESS.
+     */
+    private fun hintFor(error: DJIError?): String? = when (error) {
+        DJISDKError.INVALID_METADATA ->
+            "INVALID_METADATA usually means the App Key itself is malformed - a stray " +
+                "space or newline, or a truncated paste. Re-copy it from " +
+                "developer.dji.com with no surrounding whitespace."
+        DJISDKError.BUNDLE_NOT_MATCH ->
+            "BUNDLE_NOT_MATCH: this App Key is registered against a different package " +
+                "name. It must be registered for 'drone.test'."
+        DJISDKError.APP_KEY_NOT_EXIST,
+        DJISDKError.INVALID_APP_KEY ->
+            "DJI does not recognise this key at all. Check it was copied in full."
+        DJISDKError.EMPTY_APP_KEY ->
+            "The App Key reached the SDK empty."
+        DJISDKError.COULD_NOT_CONNECT_TO_INTERNET,
+        DJISDKError.HTTP_TIMEOUT ->
+            "The phone could not reach DJI's servers. Registration needs internet."
+        DJISDKError.MAX_ACTIVATION_COUNT_REACHED ->
+            "This key has hit its activation limit on developer.dji.com."
+        DJISDKError.APP_KEY_LEVEL_NOT_PERMITTED ->
+            "This key's permission level does not allow the feature requested."
+        else -> null
+    }
 
     fun isHandHeld(): Boolean = product is HandHeld
 

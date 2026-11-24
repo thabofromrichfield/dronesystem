@@ -43,7 +43,7 @@ class BootActivity : AppCompatActivity() {
                 DemoTelemetry.stop()
                 Backend.uav.register(this)
             } else {
-                LogBus.warn("permissions missing — requesting")
+                LogBus.warn("requesting: ${SdkPermissions.missingNames(this)}")
                 SdkPermissions.request(this)
             }
         }
@@ -91,8 +91,11 @@ class BootActivity : AppCompatActivity() {
         if (requestCode == SdkPermissions.REQUEST_CODE && SdkPermissions.allGranted(this)) {
             LogBus.ok("permissions granted")
             Backend.uav.register(this)
-        } else {
-            LogBus.err("permissions denied — SDK cannot see the aircraft")
+        } else if (requestCode == SdkPermissions.REQUEST_CODE) {
+            // Name what is still missing. "permissions denied" alone gives the
+            // pilot nothing to act on.
+            LogBus.err("still missing: ${SdkPermissions.missingNames(this)}")
+            LogBus.err("grant them in Settings > Apps > GHOSTGRID > Permissions")
         }
         render()
     }
