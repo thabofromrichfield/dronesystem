@@ -40,19 +40,32 @@ controller; the phone is the head-up glass either way.
 
 ## Supported aircraft
 
-DJI Mobile SDK V4 4.18 talks to these and nothing newer. Taken from the bundled
-API reference, not from memory:
+Exactly the 40 members of `DJIAircraft.ModelName` in DJI Mobile SDK V4 4.18,
+extracted from the bundled reference — not from memory, and not a guess:
 
 | Family | Models |
 | --- | --- |
-| Mavic | Pro, Air, Air 2, 2 Pro, 2 Zoom, 2 Enterprise / Dual / Advanced, Mini (1) |
-| Phantom | 3 Standard / Advanced / Professional, 4, 4 Advanced, 4 Pro, 4 Pro V2 |
-| Inspire | 1, 1 Pro, 1 Raw, 2 |
+| Mavic | Pro, Air, Air 2, Mini, 2, 2 Pro, 2 Zoom, 2 Enterprise, 2 Enterprise Dual, 2 Enterprise Advanced |
+| DJI-branded | **Mini 2**, **Mini SE**, **Air 2S** |
+| Phantom | 3 Standard / Advanced / Professional / 4K, 4, 4 Advanced, 4 Pro, 4 Pro V2, 4 Multispectral |
+| Inspire | 1, 1 Pro, 1 RAW, 2 |
 | Matrice | 100, 200 / V2, 210 / V2, 210 RTK / V2, 300 RTK, 600, 600 Pro |
+| Other | Spark, A3, N3 |
 
-**Not supported:** Mini 2 and later, Air 3, Mavic 3 family, Avata, FPV, Neo.
-Those need Mobile SDK **v5**, which is a different SDK with a different API —
-this project would not build against it unchanged.
+Re-derive it yourself:
+
+```bash
+grep -o 'DJIAircraft_DJIAircraftModelName[A-Za-z0-9]*_inline' \
+  "dji-reference/docs/API Reference/javascripts/search_index.js" | sort -u
+```
+
+**Not supported:** Mini 3 / 4 / 4K, Air 3 / 3S, Mavic 3 family, Avata, FPV,
+Neo, Flip. None has an enum member, and none appears anywhere in the 4.18
+reference. Those need Mobile SDK **v5** — a different SDK with a different API,
+so this project would not build against it unchanged.
+
+**The list is not the test, though.** The app reports your aircraft's actual
+model name on the boot screen; see [FIRST-FLIGHT.md](FIRST-FLIGHT.md).
 
 ## Two build flavours
 
