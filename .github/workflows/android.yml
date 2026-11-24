@@ -192,6 +192,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish the APK to the repository download page
+        if: steps.key.outputs.available == 'true' && success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
