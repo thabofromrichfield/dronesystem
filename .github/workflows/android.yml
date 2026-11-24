@@ -20,7 +20,7 @@ env:
 jobs:
   # ---- fast structural checks, no toolchain needed -----------------------
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,15 +31,22 @@ jobs:
 
   # ---- interface build, always works, no secrets needed -------------------
   sim:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: verify
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DIST }}
-      - uses: android-actions/setup-android@v3
+      - name: Ensure the SDK packages this build needs
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SM" ] || SM="$(command -v sdkmanager)"
+          yes | "$SM" --licenses > /dev/null 2>&1 || true
+          # AGP 4.2.2 defaults to build-tools 30.0.2; compileSdk 33 needs platform 33.
+          "$SM" "platforms;android-33" "build-tools;30.0.2" "build-tools;33.0.2"
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build simDebug
@@ -60,7 +67,7 @@ jobs:
   # Without the secret this job warns and exits 0 rather than failing the run,
   # so the sim build stays green.
   full:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: verify
     steps:
       - uses: actions/checkout@v4
@@ -88,14 +95,19 @@ jobs:
           PY
           echo "available=true" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         if: steps.key.outputs.available == 'true'
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DIST }}
 
-      - uses: android-actions/setup-android@v3
+      - name: Ensure the SDK packages this build needs
         if: steps.key.outputs.available == 'true'
+        run: |
+          SM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SM" ] || SM="$(command -v sdkmanager)"
+          yes | "$SM" --licenses > /dev/null 2>&1 || true
+          "$SM" "platforms;android-33" "build-tools;30.0.2" "build-tools;33.0.2"
 
       - name: Grant execute permission for gradlew
         if: steps.key.outputs.available == 'true'
@@ -122,15 +134,22 @@ jobs:
   # with the placeholder key would install and then fail at launch.
   full_compile_check:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.compile_full_without_key }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: verify
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DIST }}
-      - uses: android-actions/setup-android@v3
+      - name: Ensure the SDK packages this build needs
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SM" ] || SM="$(command -v sdkmanager)"
+          yes | "$SM" --licenses > /dev/null 2>&1 || true
+          # AGP 4.2.2 defaults to build-tools 30.0.2; compileSdk 33 needs platform 33.
+          "$SM" "platforms;android-33" "build-tools;30.0.2" "build-tools;33.0.2"
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Compile fullDebug against dji-sdk 4.18 (no key, no artifact)
