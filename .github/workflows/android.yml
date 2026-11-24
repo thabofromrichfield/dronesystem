@@ -1,0 +1,137 @@
+name: Android build
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      compile_full_without_key:
+        description: 'Compile-check the full flight code without a DJI App Key (no APK produced)'
+        type: boolean
+        default: false
+
+# Gradle 6.7.1 + AGP 4.2.2 need JDK 11. The runners default to 17 or 21, which
+# fails with "Unsupported class file major version" before anything else runs.
+env:
+  JAVA_VERSION: '11'
+  JAVA_DIST: 'temurin'
+
+jobs:
+  # ---- fast structural checks, no toolchain needed -----------------------
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Structural checks
+        run: python3 tools/verify_structure.py
+
+  # ---- interface build, always works, no secrets needed -------------------
+  sim:
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DIST }}
+      - uses: android-actions/setup-android@v3
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build simDebug
+        run: ./gradlew --no-daemon assembleSimDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ghostgrid-sim-debug
+          path: app/build/outputs/apk/sim/debug/*.apk
+          if-no-files-found: error
+
+  # ---- real aircraft build, needs the DJI_API_KEY repository secret --------
+  #
+  # The App Key is never committed. Set it at
+  #   Settings → Secrets and variables → Actions → New repository secret
+  #   name: DJI_API_KEY
+  # and the key must be registered against package name: drone.test
+  #
+  # Without the secret this job warns and exits 0 rather than failing the run,
+  # so the sim build stays green.
+  full:
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for the DJI App Key
+        id: key
+        env:
+          DJI_KEY: ${{ secrets.DJI_API_KEY }}
+        run: |
+          if [ -z "$DJI_KEY" ]; then
+            echo "::warning::DJI_API_KEY secret is not set. Skipping the full build."
+            echo "::warning::Add it under Settings -> Secrets and variables -> Actions."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 - <<'PY'
+          import os
+          p = 'app/src/main/res/values/strings.xml'
+          s = open(p, encoding='utf-8').read()
+          needle = 'PASTE_YOUR_DJI_APP_KEY_HERE'
+          if needle not in s:
+              raise SystemExit('placeholder not found — strings.xml layout changed')
+          open(p, 'w', encoding='utf-8').write(s.replace(needle, os.environ['DJI_KEY']))
+          print('App Key injected from the DJI_API_KEY secret')
+          PY
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        if: steps.key.outputs.available == 'true'
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DIST }}
+
+      - uses: android-actions/setup-android@v3
+        if: steps.key.outputs.available == 'true'
+
+      - name: Grant execute permission for gradlew
+        if: steps.key.outputs.available == 'true'
+        run: chmod +x gradlew
+
+      # DJI SDK 4.18 is a large download. This is the slow step.
+      - name: Build fullDebug
+        if: steps.key.outputs.available == 'true'
+        run: ./gradlew --no-daemon assembleFullDebug
+
+      - uses: actions/upload-artifact@v4
+        if: steps.key.outputs.available == 'true'
+        with:
+          name: ghostgrid-full-debug
+          path: app/build/outputs/apk/full/debug/*.apk
+          if-no-files-found: error
+
+  # ---- compile-check the flight code with no App Key ---------------------
+  #
+  # The full APK needs a real key to register with DJI, but compiling src/full
+  # needs only the SDK on the classpath. This job proves RealBackend, FlightOps,
+  # TelemetrySource, VirtualStickController and the DJI FpvSurface actually
+  # compile against dji-sdk 4.18. It uploads nothing, on purpose: an APK built
+  # with the placeholder key would install and then fail at launch.
+  full_compile_check:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.compile_full_without_key }}
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DIST }}
+      - uses: android-actions/setup-android@v3
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Compile fullDebug against dji-sdk 4.18 (no key, no artifact)
+        run: ./gradlew --no-daemon assembleFullDebug -PallowPlaceholderKey=true

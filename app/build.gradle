@@ -140,6 +140,9 @@ dependencies {
 gradle.taskGraph.whenReady { graph ->
     def wantsFull = graph.allTasks.any { it.name.toLowerCase().contains('full') }
     if (!wantsFull) return
+    // CI passes -PallowPlaceholderKey=true to compile-check the flight code
+    // without a key. The resulting APK will not register with DJI.
+    if (project.hasProperty('allowPlaceholderKey')) return
     def res = file('src/main/res/values/strings.xml')
     if (!res.exists()) return
     if (res.text.contains('PASTE_YOUR_DJI_APP_KEY_HERE')) {
