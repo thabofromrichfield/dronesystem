@@ -127,14 +127,35 @@ jobs:
             exit 0
           fi
           python3 - <<'PY'
-          import os
+          import os, re, sys
           p = 'app/src/main/res/values/strings.xml'
           s = open(p, encoding='utf-8').read()
           needle = 'PASTE_YOUR_DJI_APP_KEY_HERE'
           if needle not in s:
-              raise SystemExit('placeholder not found — strings.xml layout changed')
-          open(p, 'w', encoding='utf-8').write(s.replace(needle, os.environ['DJI_KEY']))
-          print('App Key injected from the DJI_API_KEY secret')
+              raise SystemExit('placeholder not found - strings.xml layout changed')
+
+          raw = os.environ['DJI_KEY']
+          key = raw.strip()
+
+          # A trailing newline or space from copy-paste survives into the APK and
+          # DJI rejects it as REGISTRATION_INVALID_METADATA, which reads like a
+          # server problem rather than a whitespace problem.
+          if key != raw:
+              print('WARNING: trimmed %d whitespace character(s) from the secret'
+                    % (len(raw) - len(key)))
+          if len(key) < 20:
+              sys.exit('DJI_API_KEY looks truncated: %d characters' % len(key))
+          bad = [c for c in key if not c.isalnum() and c not in '+/=-_']
+          if bad:
+              sys.exit('DJI_API_KEY has characters that are not in a DJI key: %r'
+                       % ''.join(sorted(set(bad))))
+          if key.startswith(('<', '"', "'")) or '&quot;' in key:
+              sys.exit('DJI_API_KEY looks like it was pasted with quotes around it')
+
+          import hashlib
+          open(p, 'w', encoding='utf-8').write(s.replace(needle, key))
+          print('App Key injected: %d chars, sha256 %s..., no whitespace'
+                % (len(key), hashlib.sha256(key.encode()).hexdigest()[:12]))
           PY
           echo "available=true" >> "$GITHUB_OUTPUT"
 
