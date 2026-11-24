@@ -87,6 +87,36 @@ The `sim` build and `preview/index.html` exist so the interface can be developed
 without hardware. Neither can command an aircraft. VS Code and emulator setup in
 [VSCODE.md](VSCODE.md); Android Studio path in [SETUP.md](SETUP.md).
 
+## Getting an APK without installing the toolchain
+
+[`.github/workflows/android.yml`](.github/workflows/android.yml) builds both
+flavours on every push. No local JDK, Android SDK or Gradle needed.
+
+Push, then open **Actions** → the newest run → **Artifacts** at the bottom.
+
+| Artifact | Size | Use |
+| --- | --- | --- |
+| `ghostgrid-sim-debug` | ~3 MB | emulator, interface only |
+| `ghostgrid-full-debug-NO-APP-KEY` | ~73 MB | installs and launches, **will not connect** |
+
+That 70 MB difference is DJI's ARM native libraries. The full APK is named the
+way it is because it is built with the placeholder key: it registers with DJI,
+gets rejected, and never reaches an aircraft.
+
+**To get a full APK that actually flies**, add your key as a repository secret:
+
+1. Settings → Secrets and variables → Actions → **New repository secret**
+2. Name it exactly `DJI_API_KEY`, value = your App Key
+3. Push anything, or re-run the workflow
+
+The `full` job then builds `ghostgrid-full-debug` with the key baked in. The key
+is injected at build time and is never committed. Your App Key must be
+registered against package `drone.test` — see [FIRST-FLIGHT.md](FIRST-FLIGHT.md).
+
+Until the secret exists, the `full` job skips and says so, and the
+`full_compile_check` job still compiles `src/full` against dji-sdk 4.18 so the
+flight code is never left uncompiled.
+
 ## Repository layout
 
 Two halves, deliberately separate:
