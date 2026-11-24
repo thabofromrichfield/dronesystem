@@ -78,10 +78,14 @@ Nothing in `ui/` imports `dji.*`, and a check in the build notes enforces it.
 | Android emulator | `./gradlew installSimDebug` | the real app, synthetic telemetry, x86_64 |
 | Physical phone + aircraft | `./gradlew assembleFullDebug` | the real app, real flight |
 
-`preview/index.html` is a browser port of the HUD, joysticks and mission console.
-It links no DJI SDK and sends nothing anywhere — it is a visual reference, not
-the app. VS Code setup and the full emulator path are in [VSCODE.md](VSCODE.md);
-Android Studio path in [SETUP.md](SETUP.md).
+**The real app is the `full` build.** `assembleFullDebug` produces an APK that
+registers with DJI, decodes the live camera feed and flies the aircraft. It needs
+a physical phone and a DJI App Key registered against package `drone.test`.
+Step-by-step from repo to first flight: [FIRST-FLIGHT.md](FIRST-FLIGHT.md).
+
+The `sim` build and `preview/index.html` exist so the interface can be developed
+without hardware. Neither can command an aircraft. VS Code and emulator setup in
+[VSCODE.md](VSCODE.md); Android Studio path in [SETUP.md](SETUP.md).
 
 ## Repository layout
 
