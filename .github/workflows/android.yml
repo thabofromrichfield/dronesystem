@@ -92,13 +92,24 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
+          # sim and full publish to the same release in parallel and --clobber
+          # deletes before it uploads, so the two jobs can collide. Retry rather
+          # than fail the build over a transient conflict.
           gh release create "$RELEASE_TAG" \
             --title "GHOSTGRID - latest build" \
             --notes "Built automatically from the newest commit on this branch." \
             --target "$GITHUB_SHA" 2>/dev/null || true
-          gh release upload "$RELEASE_TAG" app/build/outputs/apk/sim/debug/*.apk --clobber
-          echo "::notice::APK published to the latest-build release"
+          for attempt in 1 2 3 4 5; do
+            if gh release upload "$RELEASE_TAG" app/build/outputs/apk/sim/debug/*.apk --clobber 2>upload.err; then
+              echo "::notice::APK published to the latest-build release"
+              exit 0
+            fi
+            echo "upload attempt $attempt failed:"
+            cat upload.err
+            sleep $((attempt * 10))
+          done
+          echo "::error::could not publish the APK after 5 attempts"
+          exit 1
 
   # ---- real aircraft build, needs the DJI_API_KEY repository secret --------
   #
@@ -217,13 +228,24 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
+          # sim and full publish to the same release in parallel and --clobber
+          # deletes before it uploads, so the two jobs can collide. Retry rather
+          # than fail the build over a transient conflict.
           gh release create "$RELEASE_TAG" \
             --title "GHOSTGRID - latest build" \
             --notes "Built automatically from the newest commit on this branch." \
             --target "$GITHUB_SHA" 2>/dev/null || true
-          gh release upload "$RELEASE_TAG" app/build/outputs/apk/full/debug/*.apk --clobber
-          echo "::notice::APK published to the latest-build release"
+          for attempt in 1 2 3 4 5; do
+            if gh release upload "$RELEASE_TAG" app/build/outputs/apk/full/debug/*.apk --clobber 2>upload.err; then
+              echo "::notice::APK published to the latest-build release"
+              exit 0
+            fi
+            echo "upload attempt $attempt failed:"
+            cat upload.err
+            sleep $((attempt * 10))
+          done
+          echo "::error::could not publish the APK after 5 attempts"
+          exit 1
 
   # ---- compile-check the flight code with no App Key ---------------------
   #
