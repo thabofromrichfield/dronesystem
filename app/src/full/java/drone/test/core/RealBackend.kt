@@ -1,5 +1,6 @@
 package drone.test.core
 
+import android.app.Application
 import android.content.Context
 
 /**
@@ -12,8 +13,8 @@ class RealBackend : UavBackend {
     override val label = "DJI MOBILE SDK 4.18"
     override val canFly = true
 
-    override fun installNatives(context: Context) {
-        runCatching { com.cySdkyc.clx.Helper.install(context) }
+    override fun installNatives(app: Application) {
+        runCatching { com.cySdkyc.clx.Helper.install(app) }
             .onFailure { LogBus.err("native loader: ${it.message}") }
     }
 

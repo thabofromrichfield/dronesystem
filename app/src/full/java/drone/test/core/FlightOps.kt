@@ -142,7 +142,7 @@ object FlightOps {
                 .pitch(speed)
                 .yaw(Rotation.NO_ROTATION)
                 .roll(Rotation.NO_ROTATION)
-                .time(0f)
+                .time(0.0)
                 .build(),
             null
         )
@@ -156,7 +156,7 @@ object FlightOps {
                 .pitch(pitchDeg)
                 .yaw(Rotation.NO_ROTATION)
                 .roll(Rotation.NO_ROTATION)
-                .time(1f)
+                .time(1.0)
                 .build(),
             cb("gimbal to ${pitchDeg.toInt()} deg")
         )

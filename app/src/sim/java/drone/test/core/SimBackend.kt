@@ -1,5 +1,6 @@
 package drone.test.core
 
+import android.app.Application
 import android.content.Context
 
 /**
@@ -18,7 +19,7 @@ class SimBackend : UavBackend {
 
     private val listeners = java.util.concurrent.CopyOnWriteArrayList<(UavLinkState) -> Unit>()
 
-    override fun installNatives(context: Context) {
+    override fun installNatives(app: Application) {
         LogBus.info("sim backend: no native libraries to unpack")
     }
 

@@ -63,7 +63,7 @@ jobs:
           [ -f build.log ] || { echo "::error::no build.log produced"; exit 0; }
           {
             echo "===== Kotlin / Java errors ====="
-            grep -E "^e: |error: " build.log | head -12
+            grep -E "^e: |error: " build.log | head -40
             echo "===== What went wrong ====="
             sed -n '/What went wrong/,/^\* Try/p' build.log | head -20
           } > fail.txt
@@ -72,7 +72,7 @@ jobs:
             [ -z "$line" ] && continue
             echo "::error::${line}"
             n=$((n+1))
-            [ "$n" -ge 9 ] && break
+            [ "$n" -ge 30 ] && break
           done < fail.txt
       - uses: actions/upload-artifact@v4
         if: success()
@@ -154,7 +154,7 @@ jobs:
           [ -f build.log ] || { echo "::error::no build.log produced"; exit 0; }
           {
             echo "===== Kotlin / Java errors ====="
-            grep -E "^e: |error: " build.log | head -12
+            grep -E "^e: |error: " build.log | head -40
             echo "===== What went wrong ====="
             sed -n '/What went wrong/,/^\* Try/p' build.log | head -20
           } > fail.txt
@@ -163,7 +163,7 @@ jobs:
             [ -z "$line" ] && continue
             echo "::error::${line}"
             n=$((n+1))
-            [ "$n" -ge 9 ] && break
+            [ "$n" -ge 30 ] && break
           done < fail.txt
       - uses: actions/upload-artifact@v4
         if: steps.key.outputs.available == 'true' && success()
@@ -215,7 +215,7 @@ jobs:
           [ -f build.log ] || { echo "::error::no build.log produced"; exit 0; }
           {
             echo "===== Kotlin / Java errors ====="
-            grep -E "^e: |error: " build.log | head -12
+            grep -E "^e: |error: " build.log | head -40
             echo "===== What went wrong ====="
             sed -n '/What went wrong/,/^\* Try/p' build.log | head -20
           } > fail.txt
@@ -224,5 +224,5 @@ jobs:
             [ -z "$line" ] && continue
             echo "::error::${line}"
             n=$((n+1))
-            [ "$n" -ge 9 ] && break
+            [ "$n" -ge 30 ] && break
           done < fail.txt

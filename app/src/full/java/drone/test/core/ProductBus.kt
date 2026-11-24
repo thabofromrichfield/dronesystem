@@ -2,10 +2,12 @@ package drone.test.core
 
 import android.content.Context
 import dji.common.error.DJIError
+import dji.sdk.base.BaseComponent
 import dji.sdk.base.BaseProduct
 import dji.sdk.products.Aircraft
 import dji.sdk.products.HandHeld
 import dji.common.error.DJISDKError
+import dji.sdk.sdkmanager.DJISDKInitEvent
 import dji.sdk.sdkmanager.DJISDKManager
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -55,7 +57,9 @@ object ProductBus {
             }
         }
 
-        override fun onProductConnected(p: BaseProduct?) {
+        // DJI 4.18 names these onProductConnect / onProductDisconnect, with no
+        // "-ed". The past-tense names are what the older SDK docs show.
+        override fun onProductConnect(p: BaseProduct?) {
             product = p
             if (p != null) {
                 LogBus.ok("Aircraft linked: ${p.model}")
@@ -72,20 +76,31 @@ object ProductBus {
             }
         }
 
-        override fun onProductDisconnected() {
+        override fun onProductDisconnect() {
             LogBus.warn("Aircraft channel dropped")
             product = null
             TelemetryStore.mutate { copy(linked = false) }
             setLink(Link.STANDBY)
         }
 
-        override fun onComponentConnected(key: BaseProduct.ComponentKey?) {
-            LogBus.info("component up: $key")
+        // One callback covers both directions; a null new component means the
+        // component went down.
+        override fun onComponentChange(
+            key: BaseProduct.ComponentKey?,
+            oldComponent: BaseComponent?,
+            newComponent: BaseComponent?
+        ) {
+            if (newComponent == null) LogBus.warn("component down: $key")
+            else LogBus.info("component up: $key")
         }
 
-        override fun onComponentDisconnected(key: BaseProduct.ComponentKey?) {
-            LogBus.warn("component down: $key")
+        /** The SDK's own initialisation progress, 0..100. */
+        override fun onInitProcess(event: DJISDKInitEvent?, percent: Int) {
+            if (percent % 25 == 0) LogBus.info("SDK init $percent%")
         }
+
+        /** HMS databases downloading in the background. Nothing to show the pilot. */
+        override fun onDatabaseDownloadProgress(current: Long, total: Long) { }
     }
 
     /** Call once from the Application. Safe to call again. */

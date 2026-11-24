@@ -1,5 +1,6 @@
 package drone.test.core
 
+import android.app.Application
 import android.content.Context
 
 /**
@@ -38,8 +39,14 @@ interface UavBackend {
 
     // ------------------------------------------------------------ lifecycle
 
-    /** Unpack native libraries. No-op where there are none. */
-    fun installNatives(context: Context)
+    /**
+     * Unpack native libraries. No-op where there are none.
+     *
+     * Takes an [Application], not a Context: DJI's native-loader helper is
+     * declared against Application. GhostGridApp is one, so the caller already
+     * passes the right thing.
+     */
+    fun installNatives(app: Application)
 
     /** Validate the App Key and open the product channel. */
     fun register(context: Context)
