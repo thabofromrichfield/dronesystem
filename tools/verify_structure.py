@@ -256,6 +256,27 @@ for kf in glob.glob('app/src/full/**/*.kt', recursive=True):
 if n_cb:
     print(f"{n_cb} DJI state callback overrides are non-null")
 
+
+# ---- 9e. runtime permissions must match the manifest ----------------------
+# Requesting a permission the manifest does not declare for the running API
+# level returns DENIED with no dialog, so it can never be granted. That
+# deadlocked the boot screen on Android 11+: SdkPermissions asked for storage
+# unconditionally while the manifest capped WRITE at API 29 and READ at 32.
+man = open('app/src/main/AndroidManifest.xml').read()
+capped = {}
+for m in re.finditer(r'uses-permission android:name="android\.permission\.(\w+)"[^>]*?maxSdkVersion="(\d+)"', man, re.S):
+    capped[m.group(1)] = int(m.group(2))
+sp = open('app/src/main/java/drone/test/core/SdkPermissions.kt').read()
+uncond = re.search(r'mutableListOf\((.*?)\)', sp, re.S)
+if not uncond:
+    bad("SdkPermissions: cannot find the unconditional permission list")
+else:
+    for name in re.findall(r'Manifest\.permission\.(\w+)', uncond.group(1)):
+        if name in capped:
+            bad("permission is requested unconditionally but the manifest caps it:",
+                name, f"maxSdkVersion={capped[name]} -> permanently DENIED above that API")
+print(f"runtime permission list matches the manifest ({len(capped)} capped permissions checked)")
+
 print()
 if fail:
     print(f"{fail} FAILURE(S)")
