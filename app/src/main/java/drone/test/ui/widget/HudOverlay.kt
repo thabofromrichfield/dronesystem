@@ -372,7 +372,7 @@ class HudOverlay @JvmOverloads constructor(
 
     private fun drawWarning(canvas: Canvas, w: Float, h: Float) {
         val msg = data.warning ?: return
-        val blink = (System.currentTimeMillis() / 400) % 2 == 0
+        val blink = (System.currentTimeMillis() / 400) % 2 == 0L
         if (blink) {
             val tw = warnPaint.measureText(msg) + 40f
             val cx = w / 2f
@@ -384,7 +384,7 @@ class HudOverlay @JvmOverloads constructor(
     }
 
     private fun drawRecBadge(canvas: Canvas, w: Float, h: Float) {
-        val blink = (System.currentTimeMillis() / 500) % 2 == 0
+        val blink = (System.currentTimeMillis() / 500) % 2 == 0L
         if (!blink) return
         val p = Paint(redFill).apply { style = Paint.Style.FILL }
         canvas.drawCircle(w - 60f, 54f, 12f, p)

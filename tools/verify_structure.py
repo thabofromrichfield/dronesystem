@@ -189,6 +189,22 @@ for f in allkt:
         if k > 1:
             bad("duplicate member function", f, n, a)
 
+
+# ---- 9b. Kotlin numeric traps the compiler caught in CI ----
+# A hex literal above 0x7FFFFFFF is a Long in Kotlin. Assigning it to Paint.color
+# (an Int) fails to compile, so every colour constant needs an explicit .toInt().
+for f in allkt:
+    src = open(f).read()
+    for m in re.finditer(r'0x([0-9A-Fa-f]{8})(?![0-9A-Fa-f])(\.toInt\(\))?', src):
+        if int(m.group(1), 16) > 0x7FFFFFFF and not m.group(2):
+            bad("hex literal exceeds Int range and is not narrowed with .toInt():", f, m.group(0))
+# System.currentTimeMillis() is a Long; Long % Int is a Long and cannot be
+# compared with an Int literal.
+for f in allkt:
+    for m in re.finditer(r'currentTimeMillis\(\)[^\n]*%[^\n]*==\s*(\d+)(?!L)', open(f).read()):
+        bad("Long == Int comparison on currentTimeMillis:", f, m.group(0)[:80])
+print("Kotlin numeric traps checked (hex width, Long == Int)")
+
 print()
 if fail:
     print(f"{fail} FAILURE(S)")

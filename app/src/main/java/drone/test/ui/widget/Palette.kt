@@ -10,5 +10,5 @@ object Palette {
     const val AMBER = 0xFFFFB300.toInt()
     const val RED = 0xFFFF1744.toInt()
     const val WHITE = 0xFFE6F7FF.toInt()
-    const val GREY = 0x8878909C
+    const val GREY = 0x8878909C.toInt()
 }
