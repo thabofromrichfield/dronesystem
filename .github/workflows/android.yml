@@ -16,6 +16,13 @@ on:
 env:
   JAVA_VERSION: '11'
   JAVA_DIST: 'temurin'
+  # One stable release holds the downloadable APKs. Actions artifacts need a
+  # GitHub login to fetch and expire; a Release is a permanent link sitting on
+  # the repository front page.
+  RELEASE_TAG: 'latest-build'
+
+permissions:
+  contents: write
 
 jobs:
   # ---- fast structural checks, no toolchain needed -----------------------
@@ -80,6 +87,18 @@ jobs:
           name: ghostgrid-sim-debug
           path: app/build/outputs/apk/sim/debug/*.apk
           if-no-files-found: error
+
+      - name: Publish the APK to the repository download page
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          gh release create "$RELEASE_TAG" \
+            --title "GHOSTGRID - latest build" \
+            --notes "Built automatically from the newest commit on this branch." \
+            --target "$GITHUB_SHA" 2>/dev/null || true
+          gh release upload "$RELEASE_TAG" app/build/outputs/apk/sim/debug/*.apk --clobber
+          echo "::notice::APK published to the latest-build release"
 
   # ---- real aircraft build, needs the DJI_API_KEY repository secret --------
   #
@@ -171,6 +190,18 @@ jobs:
           name: ghostgrid-full-debug
           path: app/build/outputs/apk/full/debug/*.apk
           if-no-files-found: error
+
+      - name: Publish the APK to the repository download page
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          gh release create "$RELEASE_TAG" \
+            --title "GHOSTGRID - latest build" \
+            --notes "Built automatically from the newest commit on this branch." \
+            --target "$GITHUB_SHA" 2>/dev/null || true
+          gh release upload "$RELEASE_TAG" app/build/outputs/apk/full/debug/*.apk --clobber
+          echo "::notice::APK published to the latest-build release"
 
   # ---- compile-check the flight code with no App Key ---------------------
   #
